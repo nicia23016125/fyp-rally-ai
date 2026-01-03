@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Rally AI</title>
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Pacifico&display=swap">
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+    <style>
+        body, html {
+            height: 100%;
+            margin: 0;
+            font-family: Arial, sans-serif;
+            background: url('/images/abc.jpg') no-repeat center center fixed;
+            background-size: cover;
+        }
+        .navbar {
+            background-color: rgba(223, 166, 241, 0.7); 
+        }
+        .navbar-brand img {
+            height: 50px;
+        }
+        .navbar-nav .nav-link {
+            color: white !important;
+            transition: color 0.3s;
+        }
+        .navbar-nav .nav-link:hover {
+            color: grey !important; 
+        }
+        main {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+        }
+        .content {
+            display: flex;
+            flex-direction: row;
+            flex: 1;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+        .left-side {
+            position: relative;
+            width: 50%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            text-align: center;
+            color: white;
+            padding: 40px;
+        }
+        .left-side::before {
+            content: "";
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: url('/images/xxx.png') no-repeat center center;
+            background-size: cover;
+            opacity: 0.7; /* Ensure visibility */
+            z-index: 1;
+            border-radius: 10px; 
+        }
+        .left-side > div {
+            position: relative;
+            z-index: 2;
+        }
+        .left-side h2 {
+            font-size: 3em;
+            font-weight: bold;
+            margin-bottom: 0.5em;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5); 
+        }
+        .right-side {
+            width: 50%;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            background-color: rgba(255, 255, 255, 0.9); 
+            padding: 40px;
+            color: #333;
+            border-radius: 10px; 
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2); 
+        }
+        .right-side h4 {
+            color: #ad6ee8;
+            margin-bottom: 10px;
+            font-size: 2em;
+            text-align: center;
+        }
+        .right-side p {
+            color: #ad6ee8;
+            font-size: 1.2em;
+            text-align: center;
+            margin-bottom: 40px;
+        }
+        .login-form {
+            width: 100%;
+            max-width: 400px;
+        }
+        .login-form .section {
+            display: flex;
+            flex-direction: column;
+            margin-bottom: 20px;
+            width: 100%;
+        }
+        .login-form .section label {
+            font-weight: bold;
+            margin-bottom: 10px;
+        }
+        .login-form .section input {
+            width: 100%;
+            padding: 10px;
+            margin: 10px 0;
+            border-radius: 5px;
+            border: 1px solid #ccc;
+            font-size: 16px;
+        }
+        .login-form .section button {
+            width: 100%;
+            padding: 10px;
+            margin: 10px 0;
+            border-radius: 5px;
+            border: none;
+            font-size: 16px;
+            cursor: pointer;
+        }
+        .login-form .section .forget-password {
+            background-color: transparent;
+            color: #ad6ee8;
+            text-align: right;
+            margin-bottom: 20px;
+        }
+        .login-form .section .forget-password:hover {
+            text-decoration: underline;
+        }
+        .login-form .section .login-btn {
+            background-color: #ad6ee8;
+            color: white;
+        }
+    </style>
+</head>
+<body>
+    <%- include ('partials/navbar.ejs') %>
+    <main>
+        <div class="content">
+            <div class="left-side">
+                <div>
+                    <h2>Welcome back — your insights are ready.</h2>
+                </div>
+            </div>
+            <div class="right-side">
+                <h4>Login</h4>
+                <p>Sign in to continue</p>
+                <% if (error.length > 0) { %>
+                    <div class="alert alert-danger"><%= error %></div>
+                <% } %>
+                <% if (success.length > 0) { %>
+                    <div class="alert alert-success"><%= success %></div>
+                <% } %>
+                
+
+                <% if (messages && messages.length > 0) { %>
+                    <div class="alert alert-success">
+                        <% messages.forEach(function(message) { %>
+                            <p><%= message %></p>
+                        <% }); %>
+                    </div>
+                <% } %>
+
+                <form action="/login" method="POST" class="login-form">
+                    <div class="section">
+                        <label for="userEmail">Email:</label>
+                        <input type="email" id="userEmail" name="userEmail" class="form-control" required>
+                    </div>
+                    <div class="section">
+                        <label for="userPassword">Password:</label>
+                        <input type="password" id="userPassword" name="userPassword" class="form-control" required>
+                    </div>
+                    <div class="section">
+                        <a href="/forgetpassword" class="forget-password">Forgot password?</a>
+                        <button type="submit" class="login-btn">Login</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </main>
+</body>
+</html>

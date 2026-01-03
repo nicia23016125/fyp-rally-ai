@@ -1,0 +1,70 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Rally AI</title>
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background: url('/images/k.jpg') no-repeat center center fixed;
+            background-size: cover;
+            color: white;
+        }
+        .event-card {
+            background-color: rgba(255, 255, 255, 0.9);
+            color: black;
+            border-radius: 10px;
+            padding: 20px;
+            transition: 0.3s;
+        }
+        .event-card:hover {
+            transform: scale(1.05);
+        }
+        .event-card img {
+            width: 100%;
+            height: 200px;
+            object-fit: cover;
+        }
+    </style>
+</head>
+<body>
+    <%- include('partials/navbar.ejs') %>
+
+    <div class="container mt-5">
+        <h2 class="text-center">Available Tickets</h2>
+
+        <% if (tickets.length > 0) { %>
+            <div class="row">
+                <% tickets.forEach(ticket => { %>
+                    <div class="col-md-4 mb-4">
+                        <div class="card event-card">
+                            <img src="/images/<%= ticket.eventImage || 'default.jpg' %>" alt="<%= ticket.eventName %>">
+                            <div class="card-body">
+                                <h5><%= ticket.eventName %></h5>
+                                <p><strong>Price:</strong> $<%= ticket.ticketPrice %></p>
+                                <p><strong>Available:</strong> <%= ticket.availableTickets %></p>
+
+                                <% if (session.user) { %>
+                                    <form action="/addToCart/<%= ticket.ticketId %>" method="POST">
+                                        <input type="number" name="ticketQuantityToAdd" value="1" min="1" max="<%= ticket.availableTickets %>" required>
+                                        <button type="submit" class="btn btn-warning">Add to Cart</button>
+                                    </form>
+                                <% } else { %>
+                                    <p class="text-danger">Login to add tickets to cart.</p>
+                                <% } %>
+                                
+                                <a href="/ticket/<%= ticket.ticketId %>" class="btn btn-primary mt-2">View Details</a>
+                            </div>
+                        </div>
+                    </div>
+                <% }) %>
+            </div>
+        <% } else { %>
+            <p class="text-center text-warning">No tickets available.</p>
+        <% } %>
+    </div>
+</body>
+</html>
