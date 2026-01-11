@@ -150,19 +150,15 @@
                 <form action="/register" method="POST" enctype="multipart/form-data" class="register-form">
                     <div class="section">
                         <label for="userName">Username:</label>
-                        <input type="text" id="userName" name="userName" class="form-control" required>
+                        <input type="text" id="userName" name="userName" class="form-control" required value="<%= formData ? formData.userName : '' %>">
                     </div>
                     <div class="section">
                         <label for="userEmail">Email:</label>
-                        <input type="email" id="userEmail" name="userEmail" class="form-control" required>
+                        <input type="email" id="userEmail" name="userEmail" class="form-control" required value="<%= formData ? formData.userEmail : '' %>">
                     </div>
                     <div class="section">
                         <label for="userPassword">Password:</label>
                         <input type="password" id="userPassword" name="userPassword" class="form-control" required>
-                    </div>
-                    <div class="section">
-                        <label for="userPIN">Create a 6-digit PIN:</label>
-                        <input type="text" id="userPIN" name="userPIN" class="form-control" pattern="\d{6}" maxlength="6" required>
                     </div>
                     
                     <div class="section">
@@ -172,8 +168,8 @@
                     <div class="section">
                         <label for="userRole">Role:</label>
                         <select id="userRole" name="userRole" class="form-control" required>
-                            <option value="user">User</option>
-                            <option value="admin">Admin</option>
+                            <option value="user" <%= formData && formData.userRole === 'user' ? 'selected' : '' %>>User</option>
+                            <option value="admin" <%= formData && formData.userRole === 'admin' ? 'selected' : '' %>>Admin</option>
                         </select>
                     </div>
                     <div class="section">

@@ -1,25 +1,61 @@
+// 1. LOAD DOTENV FIRST (Crucial!)
+require('dotenv').config();
+
 const express = require('express');
 const mysql = require('mysql2');
 const multer = require('multer');
 const flash = require('connect-flash');
 const session = require('express-session');
 const bodyParser = require("body-parser");
+const path = require('path');
+
 const app = express();
 
-require('dotenv').config();
+// 2. Check if Key is Loaded (Debugging for AI Feature)
+if (!process.env.GOOGLE_API_KEY) {
+    console.error("❌ ERROR: GOOGLE_API_KEY is missing from .env file!");
+} else {
+    // Show first 8 chars for security verification
+    console.log("✅ API Key loaded successfully (Starts with: " + process.env.GOOGLE_API_KEY.substring(0, 8) + "...)");
+}
 
-// Import Controllers
+// --- IMPORT CONTROLLERS ---
+// Main App Controllers
 const cartController = require('./controllers/cartController');
 const userController = require('./controllers/userController');
 const paypalController = require('./controllers/paypalController');
 const netsQrController = require("./controllers/netsQrController");
 const ticketController = require('./controllers/ticketController');
+const subscriptionController = require('./controllers/subscriptionController');
+const dashboardController = require('./controllers/dashboardController');
+const contentController = require('./controllers/contentController');
+const reviewController = require('./controllers/reviewController');
+
+// AI Video Controller
+// Note: Ensure your file is named 'aicontroller.js' inside the controllers folder
+const videoController = require('./controllers/aicontroller'); 
 
 // Import middleware
 const { checkAuthenticated, checkAdmin, checkUser } = require('./middleware/auth');
 const { validateRegistration, validateLogin } = require('./middleware/validation');
 
-// ✅ Set up multer for file uploads
+// --- MIDDLEWARE CONFIGURATION ---
+
+// 1. Body Parsers (Updated to 50mb for AI Image/Video handling)
+app.use(express.json({ limit: '50mb' }));
+app.use(express.urlencoded({ extended: true, limit: '50mb' }));
+// Note: bodyParser.json() is technically redundant with express.json(), but kept for compatibility
+app.use(bodyParser.json()); 
+
+// 2. Static File Serving
+app.use(express.static('public')); // Main public folder
+app.use('/static', express.static(path.join(__dirname, 'static'))); // AI static assets
+app.use('/videosforindex', express.static(path.join(__dirname, 'videosforindex'))); // Jerald's videos
+
+// 3. View Engine Setup
+app.set('view engine', 'ejs');
+
+// 4. File Uploads (Multer)
 const storage = multer.diskStorage({
     destination: (req, file, cb) => {
         cb(null, 'public/images');
@@ -30,13 +66,7 @@ const storage = multer.diskStorage({
 });
 const upload = multer({ storage: storage });
 
-// ✅ Set up view engine
-app.set('view engine', 'ejs');
-app.use(express.static('public'));
-app.use(express.urlencoded({ extended: false }));
-app.use(bodyParser.json());
-
-// ✅ Session Middleware
+// 5. Session Middleware
 app.use(session({
     secret: 'secret',
     resave: false,
@@ -44,10 +74,8 @@ app.use(session({
     cookie: { maxAge: 1000 * 60 * 60 * 24 * 7 } // Session lasts 1 week
 }));
 
-// ✅ Flash Messages (After session)
+// 6. Flash Messages & Locals
 app.use(flash());
-
-// ✅ Middleware to make session & messages available in views
 app.use((req, res, next) => {
     res.locals.session = req.session;
     res.locals.error = req.flash("error");
@@ -55,10 +83,16 @@ app.use((req, res, next) => {
     next();
 });
 
+// --- ROUTES ---
+
 // ✅ Home Page
 app.get('/', (req, res) => {
-    res.render('index', { session: req.session });
+    // Pass a marker so the homepage can conditionally hide certain navbar links
+    res.render('index', { session: req.session, currentPage: 'home' });
 });
+
+// ✅ AI Video Animation Route
+app.post('/animate', videoController.animateImage);
 
 // ✅ User Routes (Login, Register, Logout)
 app.get('/login', userController.loginForm);
@@ -70,9 +104,7 @@ app.post('/register', upload.single('userImage'), validateRegistration, userCont
 
 // Forgot Password Routes
 app.get('/forgetPassword', userController.forgetPasswordForm);
-app.post('/forgetPassword', userController.verifyPin);
-
-
+app.post('/forgetPassword', userController.handlePasswordReset);
 
 // ✅ View My Profile (Ensuring the user is logged in)
 app.get('/viewMyself', checkAuthenticated, userController.getMyself);
@@ -80,16 +112,33 @@ app.get('/editMyself', checkAuthenticated, userController.editMyselfForm);
 app.post('/editMyself', checkAuthenticated, upload.single('userImage'), userController.editMyself);
 app.post('/deleteMyself', checkAuthenticated, userController.deleteMyself);
 
-// ✅ Ticket Routes
-app.get('/tickets', ticketController.getTickets);
-app.get('/ticket/:id', ticketController.getTicket);
+// ✅ Subscriptions Routes
+// 1. The general page that handles the redirect logic
+app.get('/subscriptions', subscriptionController.getSubscriptions);
+// 2. The specific page that shows a single subscription
+app.get('/subscription/:id', subscriptionController.getSubscription);
+// 3. The action that creates the subscription
+app.post('/subscribe', subscriptionController.subscribe);
 
-// ✅ Admin-only routes
+// ✅ Admin-only Subscription routes
+app.get('/admin/subscriptions/add', checkAdmin, subscriptionController.addSubscriptionForm);
+app.post('/admin/subscriptions/add', checkAdmin, subscriptionController.createSubscription);
+app.get('/admin/subscriptions/edit/:id', checkAdmin, subscriptionController.editSubscriptionForm);
+app.post('/admin/subscriptions/edit/:id', checkAdmin, subscriptionController.updateSubscription);
+app.post('/admin/subscriptions/delete/:id', checkAdmin, subscriptionController.deleteSubscription);
+
+// ✅ Admin-only Ticket routes
 app.get('/addTicket', checkAdmin, ticketController.addTicketForm);
 app.post('/addTicket', checkAdmin, upload.single('eventImage'), ticketController.addTicket);
 app.get('/editTicket/:id', checkAdmin, ticketController.editTicketForm);
 app.post('/editTicket/:id', checkAdmin, upload.single('eventImage'), ticketController.editTicket);
 app.post('/deleteTicket/:id', checkAdmin, ticketController.deleteTicket);
+
+// ✅ Admin Dashboard
+app.get('/dashboard', checkAdmin, dashboardController.index);
+
+// ✅ Admin Content Items
+app.get('/admin/content', checkAdmin, contentController.index);
 
 // ✅ Cart Routes (Users Only)
 app.get('/cart', checkAuthenticated, cartController.getCart);
@@ -107,23 +156,35 @@ app.get('/editUser/:id', checkAdmin, userController.editUserForm);
 app.post('/editUser/:id', checkAdmin, upload.single('userImage'), userController.editUser);
 app.post('/deleteUser/:id', checkAdmin, userController.deleteUser);
 
+// Review 
+app.get('/content/:id/reviews', reviewController.getReviews);
+// If they visit /review without an ID, redirect them to a default content ID (like 1)
+app.get('/review', (req, res) => res.redirect('/content/1/reviews'));
+// Auth-protected routes for actions
+app.post('/add-review', checkAuthenticated, reviewController.addReview);
+app.post('/edit-review', checkAuthenticated, reviewController.editReview);
+app.post('/delete-review/:id', checkAuthenticated, reviewController.deleteReview);
+
 // ✅ Checkout Route
 app.post('/checkout', checkAuthenticated, checkUser, cartController.checkout);
-
-// ✅ Order Routes
-// Orders pages removed as per request.
-
 
 // ✅ Unauthorized Access Page
 app.get('/401', (req, res) => {
     res.status(401).render('401', { message: "Unauthorized Access", errors: [] });
 });
 
+// ✅ Chat route - redirect logged-in users to Botpress chatbot
+// ✅ Chat route - Renders the internal chatbot page
+app.get('/chat', checkAuthenticated, (req, res) => {
+    res.render('chatbot', { session: req.session });
+});
+
 // ✅ Generate NETS QR Payment Route
 app.get("/generateNETSQR", checkAuthenticated, netsQrController.generateQrCode);
 app.post("/generateNETSQR", checkAuthenticated, netsQrController.generateQrCode);
 
-
 // ✅ Start Express Server
-const PORT = process.env.PORT || 3004;
-app.listen(PORT, () => console.log(`✅ Server running on port ${PORT}`));
+const PORT = process.env.PORT || 3005;
+app.listen(PORT, () => {
+    console.log(`✅ Server running at http://localhost:${PORT}`);
+});

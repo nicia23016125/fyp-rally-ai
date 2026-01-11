@@ -1,20 +1,28 @@
 const mysql = require('mysql2');
+require('dotenv').config();
 
-// Database connection details
-const db = mysql.createConnection({
-    host: 'localhost',
-    user: 'root',
-    password: 'Republic_C207',
-    database: 'c372_tickets'
-  });
-
-//Connecting to database
-db.connect((err) => {
-    if (err) {
-        console.error('Error connecting to MySQL:', err);
-        return;
+const pool = mysql.createPool({
+    host: process.env.DB_HOST,
+    user: process.env.DB_USER,
+    password: process.env.DB_PASSWORD,
+    database: process.env.DB_NAME,
+    port: process.env.DB_PORT || 4000,
+    waitForConnections: true,
+    connectionLimit: 10,
+    queueLimit: 0,
+    ssl: {
+        minVersion: 'TLSv1.2',
+        rejectUnauthorized: true
     }
-    console.log('Connected to MySQL database');
 });
 
-module.exports = db;
+pool.getConnection((err, connection) => {
+    if (err) {
+        console.error('❌ Connection Failed:', err.message);
+    } else {
+        console.log('✅ Connected to TiDB Cloud (fyp_rally)!');
+        connection.release();
+    }
+});
+
+module.exports = pool;

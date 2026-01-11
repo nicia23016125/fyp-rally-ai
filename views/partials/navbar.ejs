@@ -1,25 +1,28 @@
 <nav class="navbar navbar-expand-lg navbar-custom">
   <div class="container-fluid">
-    <!-- Rally AI Logo -->
     <a class="navbar-brand" href="/">Rally AI</a>
 
-    <!-- Navbar Toggle for Mobile -->
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarContent">
       <span class="navbar-toggler-icon"></span>
     </button>
 
-    <!-- Full Navbar Collapse -->
     <div class="collapse navbar-collapse" id="navbarContent">
-      <!-- Centered Navbar Links -->
       <ul class="navbar-nav mx-auto">
-        <li class="nav-item"><a class="nav-link" href="/tickets">Tickets</a></li>
-        <li class="nav-item"><a class="nav-link" href="/users">Users</a></li>
+        <% if (typeof currentPage === 'undefined' || currentPage !== 'home') { %>
+          <li class="nav-item"><a class="nav-link" href="/subscriptions">Subscriptions</a></li>
+          <li class="nav-item"><a class="nav-link" href="/users">Users</a></li>
+        <% } %>
         <li class="nav-item"><a class="nav-link" href="/cart">Cart</a></li>
       </ul>
 
-      <!-- Right-aligned User Profile & Role -->
-      <ul class="navbar-nav">
-        <!-- User Role Label -->
+      <ul class="navbar-nav ms-auto d-flex align-items-center">
+        
+        <li class="nav-item">
+          <a class="nav-link review-btn-nav" href="/content/1/reviews">
+            <i class="fas fa-star me-1"></i> Review
+          </a>
+        </li>
+
         <li class="nav-item">
           <span class="nav-link user-label">
             <%= session.user ? session.user.userRole.charAt(0).toUpperCase() + session.user.userRole.slice(1) : "Guest" %>
@@ -27,13 +30,17 @@
         </li>
 
         <% if (session.user) { %>
-          <!-- Profile Dropdown -->
           <li class="nav-item dropdown">
             <a class="nav-link dropdown-toggle" href="#" id="userDropdown" role="button" data-bs-toggle="dropdown">
               <i class="fas fa-user"></i> Profile
             </a>
             <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="userDropdown">
               <li><a class="dropdown-item" href="/viewMyself">My Profile</a></li>
+              <% if (session.user && session.user.userRole === 'admin') { %>
+                <li><a class="dropdown-item" href="/dashboard">Dashboard</a></li>
+                <li><a class="dropdown-item" href="/admin/content">Content Items</a></li>
+                <li><hr class="dropdown-divider"></li>
+              <% } %>
               <li><a class="dropdown-item" href="/logout">Logout</a></li>
             </ul>
           </li>
@@ -46,7 +53,76 @@
   </div>
 </nav>
 
-<!-- ✅ Ensure Bootstrap JS is Loaded -->
+<style>
+  .navbar-custom {
+    background-color: #eef6ff !important;
+    padding: 15px 0;
+  }
+
+  /* Force right-alignment and vertical centering */
+  .navbar-nav.ms-auto {
+    display: flex;
+    align-items: center;
+    flex-direction: row; /* Keeps items side-by-side on desktop */
+  }
+
+  .navbar .navbar-nav .nav-item {
+    margin: 0 8px;
+  }
+
+  .navbar a {
+    color: black !important;
+    font-weight: bold;
+  }
+
+  /* Review Button Styling */
+  .review-btn-nav {
+    color: #0d6efd !important;
+    border: 2px solid #0d6efd;
+    border-radius: 20px;
+    padding: 6px 15px !important;
+    transition: 0.3s ease;
+    white-space: nowrap;
+  }
+
+  .review-btn-nav:hover {
+    background-color: #0d6efd;
+    color: white !important;
+    transform: translateY(-2px);
+  }
+
+  /* User Role Label */
+  .user-label {
+    font-weight: bold;
+    background: #cfe4ff;
+    padding: 6px 15px;
+    border-radius: 20px;
+    color: black;
+    display: inline-block;
+    white-space: nowrap;
+  }
+
+  /* Profile Dropdown */
+  .nav-link.dropdown-toggle {
+    background: #cfe4ff;
+    border-radius: 20px;
+    padding: 8px 15px;
+    transition: 0.3s ease;
+  }
+
+  .nav-link.dropdown-toggle:hover {
+    background: #2b6cb0;
+    color: white !important;
+  }
+
+  .dropdown-menu {
+    background: #cfe4ff;
+    border-radius: 10px;
+    border: none;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+  }
+</style>
+
 <script>
   document.addEventListener("DOMContentLoaded", function() {
     var dropdowns = document.querySelectorAll('.dropdown-toggle');
@@ -55,65 +131,3 @@
     });
   });
 </script>
-
-<style>
-  /* Custom Navbar Styles */
-  .navbar-custom {
-    background-color: #eef6ff !important; /* Light blue */
-    padding: 15px 0;
-  }
-
-  .navbar .navbar-nav {
-    display: flex;
-    justify-content: center;
-    width: 100%;
-  }
-
-  .navbar .navbar-nav .nav-item {
-    margin: 0 15px; /* Space out nav items */
-  }
-
-  .navbar a {
-    color: black !important;
-    font-weight: bold;
-  }
-
-  /* User Role Label */
-  .user-label {
-    font-weight: bold;
-    background: #cfe4ff;
-    padding: 8px 15px;
-    border-radius: 20px;
-    color: black;
-    margin-right: 10px;
-    display: inline-block;
-  }
-
-  /* Profile Dropdown */
-  .nav-link.dropdown-toggle {
-    color: black !important;
-    font-weight: bold;
-    border-radius: 20px;
-    padding: 8px 15px;
-    background: #cfe4ff; /* Softer blue */
-    transition: 0.3s ease;
-  }
-
-  .nav-link.dropdown-toggle:hover {
-    background: #2b6cb0; /* Slightly darker blue */
-  }
-
-  .dropdown-menu {
-    background: #cfe4ff; /* Matching theme */
-    border-radius: 10px;
-  }
-
-  .dropdown-menu .dropdown-item {
-    color: black !important;
-    font-weight: bold;
-  }
-
-  .dropdown-menu .dropdown-item:hover {
-    background: #2b6cb0;
-  }
-</style>

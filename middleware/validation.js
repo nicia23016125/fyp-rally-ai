@@ -2,12 +2,15 @@
 const validateRegistration = (req, res, next) => {
     const { userName, userEmail, userPassword, userRole } = req.body;
 
-    if (!userName || !userEmail || !userPassword ||  !userRole) {
-        return res.status(400).send('All fields are required.');
+    // Ensure all required fields are present. Use flash messages so the user is redirected back to the form with errors.
+    if (!userName || !userEmail || !userPassword || !userRole) {
+        req.flash('error', 'All fields are required.');
+        req.flash('formData', req.body);
+        return res.redirect('/register');
     }
 
     if (userPassword.length < 6) {
-        req.flash('error', 'Password should be at least 6 or more characters long');
+        req.flash('error', 'Password should be at least 6 characters long');
         req.flash('formData', req.body);
         return res.redirect('/register');
     }

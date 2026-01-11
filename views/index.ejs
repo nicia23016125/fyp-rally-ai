@@ -3,116 +3,431 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Rally AI | Professional AI Video Creation</title>
+  
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
-  <title>Rally AI</title>
+
   <style>
-    /* Navbar Styling */
-    .navbar-custom {
-      background-color: #eef6ff; /* Light blue navbar */
-      padding: 15px 20px;
-    }
+    /* --- GLOBAL STYLES --- */
+    .navbar-custom { background-color: #eef6ff; padding: 15px 20px; }
+    .navbar-brand { font-size: 1.5rem; font-weight: bold; color: black !important; }
+    .nav-link { font-weight: bold; color: black !important; }
 
-    .navbar-brand {
-      font-size: 1.5rem;
-      font-weight: bold;
-      color: black !important;
-    }
-
-    .navbar-nav {
-      margin-left: auto; /* Push logout to the right */
-    }
-
-    .nav-link {
-      font-weight: bold;
-      color: black !important;
-    }
-
-    /* Hero Section Styling */
-    .hero {
-      background: url('/images/k.jpg') no-repeat center center/cover;
-      height: 100vh;
-      color: white;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      text-align: center;
-      flex-direction: column;
+    /* --- PARALLAX BACKGROUND --- */
+    .parallax-section {
+      background: url('/images/k.jpg') no-repeat center center fixed; 
+      background-size: cover;
       position: relative;
     }
-
-    .hero::before {
+    .parallax-section::before {
       content: "";
       position: absolute;
       top: 0; left: 0;
       width: 100%; height: 100%;
-      background: rgba(0, 0, 0, 0.5); /* Dark overlay for readability */
+      background: rgba(0, 0, 0, 0.65); /* Dark overlay */
+      z-index: 0;
     }
+    .parallax-content { position: relative; z-index: 1; }
 
-    .hero h1, .hero p, .hero a {
-      position: relative;
-      z-index: 1;
+    /* --- HERO --- */
+    .hero {
+      height: 70vh;
+      color: white;
+      display: flex; align-items: center; justify-content: center; text-align: center; flex-direction: column;
     }
-
-    .hero h1 {
-      font-size: 3rem;
-      font-weight: bold;
-    }
-
-    .hero p {
-      font-size: 1.5rem;
-    }
-
+    .hero h1 { font-size: 3.5rem; font-weight: bold; }
+    .hero p { font-size: 1.5rem; max-width: 800px; }
     .register-btn {
-      background-color: #fff;
-      color: #333;
-      padding: 15px 30px;
-      font-size: 1.2rem;
-      border-radius: 50px;
-      text-decoration: none;
-      display: inline-block; /* ensure margin-top applies */
-      margin-top: 20px; /* slight vertical spacing */
-      transition: 0.3s;
+      background-color: #fff; color: #333; padding: 15px 40px; font-size: 1.2rem;
+      border-radius: 50px; text-decoration: none; display: inline-block; margin-top: 20px;
+      transition: 0.3s; font-weight: bold; border: none;
+    }
+    .register-btn:hover { background-color: #ddd; transform: translateY(-2px); box-shadow: 0 4px 15px rgba(255,255,255,0.3); }
+
+    /* --- VIDEO SHOWCASE --- */
+    .video-showcase-container {
+      border-radius: 20px;
+      overflow: hidden;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.15);
+      background: #000;
+      position: relative;
+    }
+    .video-controls-overlay {
+      position: absolute;
+      top: 15px; right: 15px;
+      display: flex; gap: 10px;
+      z-index: 10;
+    }
+    .control-btn {
+      background: rgba(0, 0, 0, 0.6); 
+      backdrop-filter: blur(4px);
+      border: 1px solid rgba(255, 255, 255, 0.4);
+      color: white; width: 45px; height: 45px;
+      border-radius: 50%; display: flex; align-items: center; justify-content: center;
+      cursor: pointer; transition: 0.2s;
+    }
+    .control-btn:hover { background: rgba(255, 255, 255, 0.9); color: black; transform: scale(1.1); }
+    
+    .video-timeline-container {
+      position: absolute; bottom: 0; left: 0; width: 100%;
+      padding: 10px 20px;
+      background: linear-gradient(to top, rgba(0,0,0,0.8), transparent);
+      z-index: 10; display: flex; align-items: center;
+    }
+    .seek-bar { width: 100%; height: 5px; cursor: pointer; accent-color: #0d6efd; }
+    .video-description { padding: 20px; font-size: 1.1rem; color: #444; line-height: 1.5; }
+
+    /* --- WORKFLOW --- */
+    .workflow-step {
+      position: relative; padding: 25px;
+      background: rgba(255, 255, 255, 0.95); 
+      border-radius: 15px; height: 100%;
+      border-left: 5px solid #0d6efd;
+      box-shadow: 0 5px 15px rgba(0,0,0,0.05);
+    }
+    .workflow-icon { font-size: 2rem; color: #0d6efd; margin-bottom: 15px; }
+    .decision-loop {
+      font-size: 0.9rem; background: #fff3cd; color: #856404;
+      padding: 8px 12px; border-radius: 8px; margin-top: 15px;
+      border: 1px solid #ffeeba; display: inline-block;
     }
 
-    .register-btn:hover {
-      background-color: #ddd;
+    /* --- CARDS --- */
+    .pricing-card { border-radius: 15px; transition: 0.3s; border: none; overflow: hidden; height: 100%; }
+    .pricing-card:hover { transform: translateY(-10px); box-shadow: 0 15px 35px rgba(0,0,0,0.2); }
+    
+    .review-card {
+      background: white; border-radius: 15px; padding: 25px;
+      box-shadow: 0 4px 15px rgba(0,0,0,0.05); border: 1px solid #f0f0f0;
+      color: #333; height: 100%;
     }
-
+    .review-card p { font-style: italic; font-size: 1.1rem; color: #555; }
+    .review-card h6 { font-weight: bold; margin-top: 15px; color: #000; }
   </style>
 </head>
 <body>
 
-  <!-- Navigation Bar -->
-  <nav class="navbar navbar-expand-lg navbar-custom">
-    <div class="container">
-      <a class="navbar-brand" href="/">Rally AI
-        
-      </a>
-      <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
-        <span class="navbar-toggler-icon"></span>
-      </button>
-      <div class="collapse navbar-collapse">
-        <ul class="navbar-nav ms-auto">
-          <li class="nav-item"><a class="nav-link" href="/logout">Logout</a></li> <!-- Logout aligned right -->
-        </ul>
+  <%- include('partials/navbar.ejs') %>
+
+  <div class="hero parallax-section">
+    <div class="parallax-content">
+      <h1>Right Insight. Right Impact.</h1>
+      <p>Automated, personalized, and insight-driven.</p>
+      
+      <a href="/chat" class="register-btn">Chat Now!</a>
+      
+    </div>
+  </div>
+
+  <% if (session.user && session.user.userRole === 'user') { %>
+    <div id="bot-overlay" style="display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.5);z-index:9998;"></div>
+    <div id="bot-widget-home" style="display:none;position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);width:80%;max-width:900px;height:70%;max-height:700px;z-index:9999;box-shadow:0 6px 24px rgba(0,0,0,0.2);border-radius:8px;overflow:hidden;background:#fff;">
+      <div style="position:relative;height:100%;">
+        <button id="close-bot-home" style="position:absolute;top:6px;right:6px;z-index:10000;background:#fff;border:1px solid #ccc;border-radius:4px;padding:6px 10px;cursor:pointer;">✕</button>
+        <iframe src="https://cdn.botpress.cloud/webchat/v3.5/shareable.html?configUrl=https://files.bpcontent.cloud/2025/12/29/15/20251229152652-8B75RN7A.json" style="width:100%;height:100%;border:0;" title="Chat"></iframe>
       </div>
     </div>
-  </nav>
-
-  <!-- Hero Section -->
-  <div class="hero">
-    <h1>Right Insight. Right Impact.</h1>
-    <p>Automated, personalized, and insight-driven.</p>
-    <a href="/register" class="register-btn">Chat Now! ></a>
-  </div>
-  <% if (success.length > 0) { %>
-    <div class="alert alert-success"><%= success %></div>
-<% } %>
-<% if (error.length > 0) { %>
-    <div class="alert alert-danger"><%= error %></div>
-<% } %>
+  <% } %>
 
 
+  <section class="py-5 bg-white">
+    <div class="container text-center">
+      <div class="text-center mb-5">
+        <h2 class="fw-bold">Experience the Power of Veo 3.1</h2>
+        <p class="text-muted">High-fidelity video with natively generated audio. Use the controls below to scrub through the timeline.</p>
+      </div>
+      <div class="row g-5">
+        
+        <div class="col-md-6">
+          <div class="video-showcase-container">
+            <video id="videoBoy" width="100%" autoplay loop muted playsinline ontimeupdate="updateSeekBar('videoBoy', 'seekBoy')">
+              <source src="/videosforindex/boyrunning.mp4" type="video/mp4">
+            </video>
+            
+            <div class="video-controls-overlay">
+              <button class="control-btn" onclick="togglePlay('videoBoy', this)" title="Play/Pause"><i class="fas fa-pause"></i></button>
+              <button class="control-btn" onclick="toggleMute('videoBoy', this)" title="Mute/Unmute"><i class="fas fa-volume-mute"></i></button>
+            </div>
+            
+            <div class="video-timeline-container">
+              <input type="range" id="seekBoy" class="seek-bar" value="0" step="0.1" oninput="seekVideo('videoBoy', this)">
+            </div>
+          </div>
+          <div class="video-description">
+            <p><i class="fas fa-paint-brush me-2 text-primary"></i> The AI supports <strong>cartoon style animations</strong> perfect for storytelling.</p>
+          </div>
+        </div>
+
+        <div class="col-md-6">
+          <div class="video-showcase-container">
+            <video id="videoFuturistic" width="100%" autoplay loop muted playsinline ontimeupdate="updateSeekBar('videoFuturistic', 'seekFuturistic')">
+              <source src="/videosforindex/futuristic.mp4" type="video/mp4">
+            </video>
+            
+            <div class="video-controls-overlay">
+              <button class="control-btn" onclick="togglePlay('videoFuturistic', this)" title="Play/Pause"><i class="fas fa-pause"></i></button>
+              <button class="control-btn" onclick="toggleMute('videoFuturistic', this)" title="Mute/Unmute"><i class="fas fa-volume-mute"></i></button>
+            </div>
+
+            <div class="video-timeline-container">
+              <input type="range" id="seekFuturistic" class="seek-bar" value="0" step="0.1" oninput="seekVideo('videoFuturistic', this)">
+            </div>
+          </div>
+          <div class="video-description">
+            <p><i class="fas fa-microchip me-2 text-primary"></i> The AI supports <strong>highly realistic designs</strong> with synced AI audio.</p>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </section>
+
+
+  <section class="py-5 parallax-section text-white">
+    <div class="container parallax-content">
+      <div class="text-center mb-5"><h2 class="fw-bold">Flexible Membership Plans</h2></div>
+      <div class="row row-cols-1 row-cols-md-3 g-4">
+        
+        <div class="col">
+          <div class="card pricing-card text-dark shadow-sm">
+            <div class="card-body p-4 text-center">
+              <h4>Pay-As-You-Go</h4>
+              <h2>$0.75 <small>/clip</small></h2>
+              <a href="/subscriptions" class="btn btn-outline-dark rounded-pill mt-3">Get Started</a>
+            </div>
+          </div>
+        </div>
+
+        <div class="col">
+          <div class="card pricing-card border-primary text-dark shadow">
+            <div class="card-body p-4 text-center">
+              <div class="badge bg-primary mb-2">Popular</div>
+              <h4>Personal</h4>
+              <h2>$25 <small>/month</small></h2>
+              <p>60 Credits</p>
+              <a href="/subscriptions" class="btn btn-primary rounded-pill mt-3">Join Personal</a>
+            </div>
+          </div>
+        </div>
+
+        <div class="col">
+          <div class="card pricing-card text-dark shadow-sm">
+            <div class="card-body p-4 text-center">
+              <h4>Production</h4>
+              <h2>$120 <small>/month</small></h2>
+              <p>400 Credits</p>
+              <a href="/subscriptions" class="btn btn-dark rounded-pill mt-3">Go Production</a>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </section>
+
+
+  <section class="py-5 bg-light">
+    <div class="container">
+      <div class="text-center mb-5">
+        <h2 class="fw-bold">Inside the Engine</h2>
+        <p class="text-muted">An intelligent pipeline designed for control and creativity.</p>
+      </div>
+      <div class="row g-4">
+        
+        <div class="col-lg-3 col-md-6">
+          <div class="workflow-step">
+            <div class="workflow-icon"><i class="fas fa-pencil-alt"></i></div>
+            <h5 class="fw-bold text-dark">1. Storyboard Phase</h5>
+            <p class="small text-muted mb-2">Chatbot analyzes insights to create a storyboard prompt and visual board.</p>
+            <div class="decision-loop"><i class="fas fa-sync-alt me-1"></i> View Storyboard. Not happy? <strong>Regenerate.</strong></div>
+          </div>
+        </div>
+
+        <div class="col-lg-1 d-none d-lg-flex align-items-center justify-content-center">
+          <i class="fas fa-arrow-right fa-2x text-muted opacity-25"></i>
+        </div>
+
+        <div class="col-lg-3 col-md-6">
+          <div class="workflow-step" style="border-left-color: #6610f2;">
+            <div class="workflow-icon" style="color: #6610f2;"><i class="fas fa-magic"></i></div>
+            <h5 class="fw-bold text-dark">2. Motion Engineering</h5>
+            <p class="small text-muted mb-2">The system engineers a complex image-to-video prompt based on approval.</p>
+            <div class="decision-loop" style="background-color: #e2d9f3; color: #4c0bce; border-color: #d0c4ea;">
+              <i class="fas fa-sync-alt me-1"></i> Review Prompt. Not happy? <strong>Regenerate.</strong>
+            </div>
+          </div>
+        </div>
+
+        <div class="col-lg-1 d-none d-lg-flex align-items-center justify-content-center">
+          <i class="fas fa-arrow-right fa-2x text-muted opacity-25"></i>
+        </div>
+
+        <div class="col-lg-3 col-md-6">
+          <div class="workflow-step" style="border-left-color: #198754;">
+            <div class="workflow-icon" style="color: #198754;"><i class="fas fa-film"></i></div>
+            <h5 class="fw-bold text-dark">3. Final Production</h5>
+            <p class="small text-muted mb-2">Upon final approval, Veo 3.1 synthesizes the 8-second cinematic clip.</p>
+            <div class="mt-3 text-success fw-bold"><i class="fas fa-check-circle me-1"></i> Video Created</div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </section>
+
+
+  <section class="py-5 parallax-section text-white">
+    <div class="container parallax-content">
+      <div class="text-center mb-5">
+        <h2 class="fw-bold">Loved by Creators</h2>
+        <span class="badge bg-warning text-dark fs-6 mt-2">5/5 Average Rating</span>
+      </div>
+      <div class="row g-4">
+        <div class="col-md-4">
+          <div class="review-card h-100">
+            <p class="fst-italic">"Rally AI cut my production time in half. The generated clips are insane quality."</p>
+            <h6 class="fw-bold mt-3">- John Doe</h6>
+          </div>
+        </div>
+        <div class="col-md-4">
+          <div class="review-card h-100">
+            <p class="fst-italic">"The chatbot writes better captions than I do, and the workflow is seamless."</p>
+            <h6 class="fw-bold mt-3">- Sarah Lee</h6>
+          </div>
+        </div>
+        <div class="col-md-4">
+          <div class="review-card h-100">
+            <p class="fst-italic">"Finally, a tool that handles storyboarding and generation in one place."</p>
+            <h6 class="fw-bold mt-3">- Mike K.</h6>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+
+  <section class="py-5 bg-light">
+    <div class="container">
+      <div class="text-center mb-5">
+        <h2 class="fw-bold">Frequently Asked Questions</h2>
+        <p class="text-muted">Common questions about Veo 3.1 and payments.</p>
+      </div>
+      <div class="row justify-content-center">
+        <div class="col-lg-8">
+          <div class="accordion accordion-flush" id="faqAccordion">
+            
+            <div class="accordion-item">
+              <h2 class="accordion-header">
+                <button class="accordion-button collapsed fw-bold" type="button" data-bs-toggle="collapse" data-bs-target="#faq1">
+                  Do I own the videos I generate?
+                </button>
+              </h2>
+              <div id="faq1" class="accordion-collapse collapse" data-bs-parent="#faqAccordion">
+                <div class="accordion-body text-muted">
+                  Yes, you own the videos. You can always find your generated content saved directly in your account dashboard.
+                </div>
+              </div>
+            </div>
+
+            <div class="accordion-item">
+              <h2 class="accordion-header">
+                <button class="accordion-button collapsed fw-bold" type="button" data-bs-toggle="collapse" data-bs-target="#faq2">
+                  What happens to unused credits?
+                </button>
+              </h2>
+              <div id="faq2" class="accordion-collapse collapse" data-bs-parent="#faqAccordion">
+                <div class="accordion-body text-muted">
+                  Your unused credits automatically carry over to the next month, so you never lose what you've paid for.
+                </div>
+              </div>
+            </div>
+
+            <div class="accordion-item">
+              <h2 class="accordion-header">
+                <button class="accordion-button collapsed fw-bold" type="button" data-bs-toggle="collapse" data-bs-target="#faq3">
+                  How do I know that the payment is safe?
+                </button>
+              </h2>
+              <div id="faq3" class="accordion-collapse collapse" data-bs-parent="#faqAccordion">
+                <div class="accordion-body text-muted">
+                  We prioritize your security. We will be using <strong>NETS and PayNow</strong>, which means your billing information is not required to be stored in our database.
+                </div>
+              </div>
+            </div>
+
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+
+  <section class="py-5 text-center text-white parallax-section">
+    <div class="parallax-content py-4">
+      <h2 class="fw-bold display-5 mb-3">Stop Dreaming. Start Streaming.</h2>
+      <p class="lead mb-4 text-white-50">Join thousands of creators using Rally AI to dominate their feed.</p>
+      <a href="/register" class="btn btn-light btn-lg rounded-pill px-5 fw-bold text-primary shadow-lg">Get Started for Free</a>
+    </div>
+  </section>
+
+  <footer class="py-5 bg-dark text-white text-center">
+    <div class="container">
+      <p class="mb-0 small opacity-50">&copy; 2026 Rally AI. Powered by Veo 3.1 Architecture.</p>
+    </div>
+  </footer>
+
+
+  <script>
+    /* --- VIDEO LOGIC (Play, Mute, Seek) --- */
+    function togglePlay(id, btn) {
+      const v = document.getElementById(id);
+      const icon = btn.querySelector('i');
+      if (v.paused) { v.play(); icon.className = 'fas fa-pause'; } 
+      else { v.pause(); icon.className = 'fas fa-play'; }
+    }
+
+    function toggleMute(id, btn) {
+      const v = document.getElementById(id);
+      const icon = btn.querySelector('i');
+      v.muted = !v.muted;
+      icon.className = v.muted ? 'fas fa-volume-mute' : 'fas fa-volume-up';
+    }
+
+    // Called automatically as video plays
+    function updateSeekBar(videoId, seekId) {
+      const v = document.getElementById(videoId);
+      const s = document.getElementById(seekId);
+      if (v.duration) {
+        // Calculate percentage for slider
+        const value = (v.currentTime / v.duration) * 100;
+        s.value = value;
+      }
+    }
+
+    // Called when user drags the slider
+    function seekVideo(videoId, slider) {
+      const v = document.getElementById(videoId);
+      if (v.duration) {
+        const time = v.duration * (slider.value / 100);
+        v.currentTime = time;
+      }
+    }
+
+    /* --- BOTPRESS & AUTH LOGIC --- */
+    document.addEventListener('DOMContentLoaded', function() {
+      var w = document.getElementById('bot-widget-home');
+      var o = document.getElementById('bot-overlay');
+      
+      // Close logic (Still useful if triggered elsewhere)
+      if (document.getElementById('close-bot-home')) { 
+        document.getElementById('close-bot-home').addEventListener('click', function(){ 
+          w.style.display = 'none'; 
+          o.style.display = 'none'; 
+        }); 
+      }
+    });
+  </script>
 </body>
 </html>

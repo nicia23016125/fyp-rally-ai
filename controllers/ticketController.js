@@ -15,7 +15,7 @@ exports.addTicket = (req, res) => {
             console.error("Error adding ticket:", error);
             return res.status(500).send("Database Error: Unable to add ticket.");
         }
-        res.redirect('/tickets');
+        res.redirect('/subscriptions');
     });
 };
 
@@ -84,7 +84,7 @@ exports.editTicket = (req, res) => {
             console.error("Error updating ticket:", error);
             return res.status(500).send("Database Error: Unable to update ticket.");
         }
-        res.redirect('/tickets');
+        res.redirect('/subscriptions');
     });
 };
 
@@ -163,7 +163,7 @@ exports.deleteTicket = (req, res) => {
             console.error("Error deleting ticket:", error);
             return res.status(500).send("Database Error: Unable to delete ticket.");
         }
-        res.redirect('/tickets');
+        res.redirect('/subscriptions');
     });
 };
 

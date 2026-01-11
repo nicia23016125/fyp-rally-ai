@@ -34,29 +34,22 @@ exports.getUsers = (req, res) => {
 exports.loginForm = (req, res) => {
     res.render('login', { messages: req.flash('success'), errors: req.flash('error') });
 };
+
 exports.login = (req, res) => {
-    const { userEmail, userPassword, userPIN } = req.body;
-    let sql, values;
+    const { userEmail, userPassword } = req.body;
 
-    // ✅ Hardcoded PIN Login (Temporary)
-    if (userPIN === "777777") {
-        req.session.user = { userEmail, userRole: 'user' }; // Simulate session
-        req.flash('success', 'Login successful!');
-        return res.redirect('/cart'); // Redirect to user dashboard
-    }
-
-    if (userPassword) {
-        sql = 'SELECT * FROM users WHERE userEmail = ? AND userPassword = SHA1(?)';
-        values = [userEmail, userPassword];
-    } else {
-        req.flash('error', 'Please enter a valid password or PIN.');
+    if (!userEmail || !userPassword) {
+        req.flash('error', 'All fields are required.');
         return res.redirect('/login');
     }
 
+    const sql = 'SELECT * FROM users WHERE userEmail = ? AND userPassword = SHA1(?)';
+    const values = [userEmail, userPassword];
+
     db.query(sql, values, (err, results) => {
         if (err) {
-            console.error("Database error:", err);
-            return res.status(500).send("Error logging in.");
+            console.error('Database error:', err);
+            return res.status(500).send('Error logging in.');
         }
 
         if (results.length === 0) {
@@ -66,7 +59,8 @@ exports.login = (req, res) => {
 
         req.session.user = results[0];
         req.flash('success', 'Login successful!');
-        return res.redirect(req.session.user.userRole === 'user' ? '/cart' : '/tickets');
+        // Redirect users to the homepage and open the chatbot; keep admins on the subscriptions page
+        return res.redirect(req.session.user.userRole === 'user' ? '/?openBot=1' : '/subscriptions');
     });
 };
 
@@ -77,11 +71,12 @@ exports.logout = (req, res) => {
 exports.forgetPasswordForm = (req, res) => {
     res.render('forgetpassword');
 };
-exports.verifyPin = (req, res) => {
-    const { userEmail, pinCode } = req.body;
 
-    if (!userEmail || !pinCode) {
-        req.flash('error', 'Email and PIN are required.');
+exports.handlePasswordReset = (req, res) => {
+    const { userEmail } = req.body;
+
+    if (!userEmail) {
+        req.flash('error', 'Email is required.');
         return res.redirect('/forgetPassword');
     }
 
@@ -89,8 +84,8 @@ exports.verifyPin = (req, res) => {
 
     db.query(checkEmailSql, [userEmail], (err, results) => {
         if (err) {
-            console.error("Database error:", err);
-            return res.status(500).send("Error processing request.");
+            console.error('Database error:', err);
+            return res.status(500).send('Error processing request.');
         }
 
         if (results.length === 0) {
@@ -98,22 +93,8 @@ exports.verifyPin = (req, res) => {
             return res.redirect('/forgetPassword');
         }
 
-        const user = results[0];
-
-        // ✅ Hardcoded PIN logic
-        if (pinCode === "777777") {
-            req.session.user = user; // Log in as this user
-            req.flash('success', 'Login successful!');
-            return res.redirect('/cart'); // Redirect to cart/dashboard
-        }
-
-        // ✅ Regular PIN verification
-        if (pinCode !== user.userPIN) {
-            req.flash('error', 'Invalid PIN. Please try again.');
-            return res.redirect('/forgetPassword');
-        }
-
-        req.flash('success', 'PIN verified! Redirecting to login.');
+        // TODO: Implement sending a secure password reset email/OTP
+        req.flash('success', 'If an account exists for that email, a password reset link has been sent.');
         return res.redirect('/login');
     });
 };
@@ -124,25 +105,19 @@ exports.registerForm = (req, res) => {
 };
 
 exports.register = (req, res) => {
-    const { userName, userEmail, userPassword, userPIN, userRole } = req.body;
+    const { userName, userEmail, userPassword, userRole } = req.body;
     let userImage = req.file ? req.file.filename : 'default.png'; // Default image if none uploaded
 
-    // Ensure all fields are provided
-    if (!userName || !userEmail || !userPassword || !userPIN || !userRole) {
+    // Ensure required fields are provided
+    if (!userName || !userEmail || !userPassword || !userRole) {
         req.flash('error', 'All fields are required.');
         return res.redirect('/register');
     }
 
-    // Ensure PIN is exactly 6 digits
-    if (!/^\d{6}$/.test(userPIN)) {
-        req.flash('error', 'PIN must be exactly 6 digits.');
-        return res.redirect('/register');
-    }
+    const sql = `INSERT INTO users (username, userEmail, userPassword, userImage, userRole) 
+                 VALUES (?, ?, SHA1(?), ?, ?)`;
 
-    const sql = `INSERT INTO users (username, userEmail, userPassword, userPIN, userImage, userRole) 
-                 VALUES (?, ?, SHA1(?), ?, ?, ?)`;
-
-    db.query(sql, [userName, userEmail, userPassword, userPIN, userImage, userRole], (err, result) => {
+    db.query(sql, [userName, userEmail, userPassword, userImage, userRole], (err, result) => {
         if (err) {
             console.error("Error registering user:", err);
 
@@ -304,7 +279,9 @@ exports.editMyself = (req, res) => {
         req.flash('success', 'Profile updated successfully.');
         res.redirect('/viewMyself');
     });
-};exports.deleteMyself = (req, res) => {
+};
+
+exports.deleteMyself = (req, res) => {
     if (!req.session.user) {
         req.flash('error', "Unauthorized request.");
         return res.redirect('/login');
