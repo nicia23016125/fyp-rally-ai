@@ -86,10 +86,68 @@ app.use((req, res, next) => {
 // --- ROUTES ---
 
 // ✅ Home Page
+// ✅ UPDATED HOME ROUTE
+// Make sure this is at the very top of app.js if not already there
+const db = require('./db'); 
+
+// ✅ REPLACED HOME ROUTE WITH DEBUGGING
 app.get('/', (req, res) => {
-    // Pass a marker so the homepage can conditionally hide certain navbar links
-    res.render('index', { session: req.session, currentPage: 'home' });
+    console.log("------------------------------------------------");
+    console.log("1. Accessing Homepage Route...");
+
+    // Fetch up to 6 latest reviews
+    const sql = `
+        SELECT reviews.*, reviews.rating, users.username 
+        FROM reviews 
+        JOIN users ON reviews.reviewedByUserId = users.userId 
+        ORDER BY createdAt DESC 
+        LIMIT 6
+    `;
+
+    db.query(sql, (err, results) => {
+        if (err) {
+            console.error("❌ Database Error:", err);
+            // Render page empty to prevent crash
+            return res.render('index', { 
+                session: req.session, 
+                currentPage: 'home', 
+                reviews: [], 
+                stats: { avgRating: 0, totalReviews: 0 } 
+            });
+        }
+
+        console.log("2. Reviews Found in DB:", results.length);
+        if (results.length > 0) {
+            console.log("   -> First review:", results[0]);
+        }
+
+        // Calculate Statistics
+        let totalStars = 0;
+        let starCounts = { star1: 0, star2: 0, star3: 0, star4: 0, star5: 0 };
+
+        results.forEach(review => {
+            const r = parseInt(review.rating);
+            totalStars += r;
+            if (r >= 1 && r <= 5) starCounts['star' + r]++;
+        });
+
+        const stats = {
+            totalReviews: results.length,
+            avgRating: results.length > 0 ? (totalStars / results.length).toFixed(1) : 0,
+            ...starCounts
+        };
+
+        console.log("3. Stats calculated:", stats);
+
+        res.render('index', { 
+            session: req.session, 
+            currentPage: 'home',
+            reviews: results,
+            stats: stats
+        });
+    });
 });
+
 
 // ✅ AI Video Animation Route
 app.post('/animate', videoController.animateImage);
@@ -184,7 +242,7 @@ app.get("/generateNETSQR", checkAuthenticated, netsQrController.generateQrCode);
 app.post("/generateNETSQR", checkAuthenticated, netsQrController.generateQrCode);
 
 // ✅ Start Express Server
-const PORT = process.env.PORT || 3005;
+const PORT = process.env.PORT || 3006;
 app.listen(PORT, () => {
     console.log(`✅ Server running at http://localhost:${PORT}`);
 });

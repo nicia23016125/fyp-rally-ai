@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Rally AI | Professional AI Video Creation</title>
-  
+
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
@@ -17,7 +17,7 @@
 
     /* --- PARALLAX BACKGROUND --- */
     .parallax-section {
-      background: url('/images/k.jpg') no-repeat center center fixed; 
+      background: url('/images/k.jpg') no-repeat center center fixed;
       background-size: cover;
       position: relative;
     }
@@ -61,7 +61,7 @@
       z-index: 10;
     }
     .control-btn {
-      background: rgba(0, 0, 0, 0.6); 
+      background: rgba(0, 0, 0, 0.6);
       backdrop-filter: blur(4px);
       border: 1px solid rgba(255, 255, 255, 0.4);
       color: white; width: 45px; height: 45px;
@@ -69,7 +69,7 @@
       cursor: pointer; transition: 0.2s;
     }
     .control-btn:hover { background: rgba(255, 255, 255, 0.9); color: black; transform: scale(1.1); }
-    
+
     .video-timeline-container {
       position: absolute; bottom: 0; left: 0; width: 100%;
       padding: 10px 20px;
@@ -82,7 +82,7 @@
     /* --- WORKFLOW --- */
     .workflow-step {
       position: relative; padding: 25px;
-      background: rgba(255, 255, 255, 0.95); 
+      background: rgba(255, 255, 255, 0.95);
       border-radius: 15px; height: 100%;
       border-left: 5px solid #0d6efd;
       box-shadow: 0 5px 15px rgba(0,0,0,0.05);
@@ -97,7 +97,7 @@
     /* --- CARDS --- */
     .pricing-card { border-radius: 15px; transition: 0.3s; border: none; overflow: hidden; height: 100%; }
     .pricing-card:hover { transform: translateY(-10px); box-shadow: 0 15px 35px rgba(0,0,0,0.2); }
-    
+
     .review-card {
       background: white; border-radius: 15px; padding: 25px;
       box-shadow: 0 4px 15px rgba(0,0,0,0.05); border: 1px solid #f0f0f0;
@@ -115,9 +115,8 @@
     <div class="parallax-content">
       <h1>Right Insight. Right Impact.</h1>
       <p>Automated, personalized, and insight-driven.</p>
-      
+
       <a href="/chat" class="register-btn">Chat Now!</a>
-      
     </div>
   </div>
 
@@ -131,26 +130,25 @@
     </div>
   <% } %>
 
-
   <section class="py-5 bg-white">
-    <div class="container text-center">
+    <div class="container-fluid px-5 text-center">
       <div class="text-center mb-5">
         <h2 class="fw-bold">Experience the Power of Veo 3.1</h2>
         <p class="text-muted">High-fidelity video with natively generated audio. Use the controls below to scrub through the timeline.</p>
       </div>
       <div class="row g-5">
-        
-        <div class="col-md-6">
+
+        <div class="col-md-4">
           <div class="video-showcase-container">
             <video id="videoBoy" width="100%" autoplay loop muted playsinline ontimeupdate="updateSeekBar('videoBoy', 'seekBoy')">
               <source src="/videosforindex/boyrunning.mp4" type="video/mp4">
             </video>
-            
+
             <div class="video-controls-overlay">
               <button class="control-btn" onclick="togglePlay('videoBoy', this)" title="Play/Pause"><i class="fas fa-pause"></i></button>
               <button class="control-btn" onclick="toggleMute('videoBoy', this)" title="Mute/Unmute"><i class="fas fa-volume-mute"></i></button>
             </div>
-            
+
             <div class="video-timeline-container">
               <input type="range" id="seekBoy" class="seek-bar" value="0" step="0.1" oninput="seekVideo('videoBoy', this)">
             </div>
@@ -160,12 +158,12 @@
           </div>
         </div>
 
-        <div class="col-md-6">
+        <div class="col-md-4">
           <div class="video-showcase-container">
             <video id="videoFuturistic" width="100%" autoplay loop muted playsinline ontimeupdate="updateSeekBar('videoFuturistic', 'seekFuturistic')">
               <source src="/videosforindex/futuristic.mp4" type="video/mp4">
             </video>
-            
+
             <div class="video-controls-overlay">
               <button class="control-btn" onclick="togglePlay('videoFuturistic', this)" title="Play/Pause"><i class="fas fa-pause"></i></button>
               <button class="control-btn" onclick="toggleMute('videoFuturistic', this)" title="Mute/Unmute"><i class="fas fa-volume-mute"></i></button>
@@ -180,16 +178,35 @@
           </div>
         </div>
 
+        <div class="col-md-4">
+          <div class="video-showcase-container">
+            <video id="talking" width="100%" autoplay loop muted playsinline ontimeupdate="updateSeekBar('talking', 'seekTalking')">
+              <source src="/videosforindex/talking.mp4" type="video/mp4">
+            </video>
+
+            <div class="video-controls-overlay">
+              <button class="control-btn" onclick="togglePlay('talking', this)" title="Play/Pause"><i class="fas fa-pause"></i></button>
+              <button class="control-btn" onclick="toggleMute('talking', this)" title="Mute/Unmute"><i class="fas fa-volume-mute"></i></button>
+            </div>
+
+            <div class="video-timeline-container">
+              <input type="range" id="seekTalking" class="seek-bar" value="0" step="0.1" oninput="seekVideo('talking', this)">
+            </div>
+          </div>
+          <div class="video-description">
+            <p><i class="fas fa-microchip me-2 text-primary"></i> The AI supports <strong>in built audio</strong> with talking animations</p>
+          </div>
+        </div>
+
       </div>
     </div>
   </section>
-
 
   <section class="py-5 parallax-section text-white">
     <div class="container parallax-content">
       <div class="text-center mb-5"><h2 class="fw-bold">Flexible Membership Plans</h2></div>
       <div class="row row-cols-1 row-cols-md-3 g-4">
-        
+
         <div class="col">
           <div class="card pricing-card text-dark shadow-sm">
             <div class="card-body p-4 text-center">
@@ -227,7 +244,6 @@
     </div>
   </section>
 
-
   <section class="py-5 bg-light">
     <div class="container">
       <div class="text-center mb-5">
@@ -235,7 +251,7 @@
         <p class="text-muted">An intelligent pipeline designed for control and creativity.</p>
       </div>
       <div class="row g-4">
-        
+
         <div class="col-lg-3 col-md-6">
           <div class="workflow-step">
             <div class="workflow-icon"><i class="fas fa-pencil-alt"></i></div>
@@ -277,36 +293,68 @@
     </div>
   </section>
 
-
-  <section class="py-5 parallax-section text-white">
+  <section class="py-5 parallax-section text-white" style="background: rgba(0,0,0,0.8);">
     <div class="container parallax-content">
+
       <div class="text-center mb-5">
         <h2 class="fw-bold">Loved by Creators</h2>
-        <span class="badge bg-warning text-dark fs-6 mt-2">5/5 Average Rating</span>
+        <div class="d-inline-block bg-dark px-4 py-2 rounded-pill border border-secondary mt-3">
+          <h1 class="display-4 fw-bold text-warning mb-0">
+            <%= stats.avgRating %> <small class="fs-4 text-white">/ 5</small>
+          </h1>
+          <div class="text-warning small">
+            <% for(let i=1; i<=5; i++) { %>
+              <i class="<%= i <= Math.round(stats.avgRating) ? 'fas' : 'far' %> fa-star"></i>
+            <% } %>
+          </div>
+          <p class="mb-0 text-muted small">Based on <%= stats.totalReviews %> reviews</p>
+        </div>
       </div>
+
       <div class="row g-4">
-        <div class="col-md-4">
-          <div class="review-card h-100">
-            <p class="fst-italic">"Rally AI cut my production time in half. The generated clips are insane quality."</p>
-            <h6 class="fw-bold mt-3">- John Doe</h6>
+
+        <% if(reviews.length === 0) { %>
+          <div class="col-12 text-center text-white-50">
+            <p>No reviews yet. Be the first to try Rally AI!</p>
           </div>
-        </div>
-        <div class="col-md-4">
-          <div class="review-card h-100">
-            <p class="fst-italic">"The chatbot writes better captions than I do, and the workflow is seamless."</p>
-            <h6 class="fw-bold mt-3">- Sarah Lee</h6>
+        <% } %>
+
+        <% reviews.forEach(review => { %>
+          <div class="col-md-4">
+            <div class="card h-100 border-0 shadow-sm" style="background: rgba(255, 255, 255, 0.95); color: #333;">
+              <div class="card-body p-4">
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                  <div class="d-flex align-items-center gap-2">
+                    <div class="bg-primary text-white rounded-circle d-flex align-items-center justify-content-center fw-bold" style="width:35px; height:35px;">
+                      <%= review.username.charAt(0).toUpperCase() %>
+                    </div>
+                    <span class="fw-bold">@<%= review.username %></span>
+                  </div>
+                  <small class="text-muted" style="font-size: 0.8rem;">
+                    <%= new Date(review.createdAt).toLocaleDateString() %>
+                  </small>
+                </div>
+
+                <div class="mb-3 text-warning">
+                  <% for(let i=1; i<=5; i++) { %>
+                    <i class="<%= i <= review.rating ? 'fas' : 'far' %> fa-star"></i>
+                  <% } %>
+                </div>
+
+                <p class="fst-italic text-secondary">"<%= review.comment %>"</p>
+              </div>
+            </div>
           </div>
-        </div>
-        <div class="col-md-4">
-          <div class="review-card h-100">
-            <p class="fst-italic">"Finally, a tool that handles storyboarding and generation in one place."</p>
-            <h6 class="fw-bold mt-3">- Mike K.</h6>
-          </div>
-        </div>
+        <% }) %>
+
       </div>
+
+      <div class="text-center mt-5">
+        <a href="/review" class="btn btn-outline-light rounded-pill px-4">See All Reviews</a>
+      </div>
+
     </div>
   </section>
-
 
   <section class="py-5 bg-light">
     <div class="container">
@@ -317,7 +365,7 @@
       <div class="row justify-content-center">
         <div class="col-lg-8">
           <div class="accordion accordion-flush" id="faqAccordion">
-            
+
             <div class="accordion-item">
               <h2 class="accordion-header">
                 <button class="accordion-button collapsed fw-bold" type="button" data-bs-toggle="collapse" data-bs-target="#faq1">
@@ -363,7 +411,6 @@
     </div>
   </section>
 
-
   <section class="py-5 text-center text-white parallax-section">
     <div class="parallax-content py-4">
       <h2 class="fw-bold display-5 mb-3">Stop Dreaming. Start Streaming.</h2>
@@ -378,13 +425,12 @@
     </div>
   </footer>
 
-
   <script>
     /* --- VIDEO LOGIC (Play, Mute, Seek) --- */
     function togglePlay(id, btn) {
       const v = document.getElementById(id);
       const icon = btn.querySelector('i');
-      if (v.paused) { v.play(); icon.className = 'fas fa-pause'; } 
+      if (v.paused) { v.play(); icon.className = 'fas fa-pause'; }
       else { v.pause(); icon.className = 'fas fa-play'; }
     }
 
@@ -419,13 +465,13 @@
     document.addEventListener('DOMContentLoaded', function() {
       var w = document.getElementById('bot-widget-home');
       var o = document.getElementById('bot-overlay');
-      
+
       // Close logic (Still useful if triggered elsewhere)
-      if (document.getElementById('close-bot-home')) { 
-        document.getElementById('close-bot-home').addEventListener('click', function(){ 
-          w.style.display = 'none'; 
-          o.style.display = 'none'; 
-        }); 
+      if (document.getElementById('close-bot-home')) {
+        document.getElementById('close-bot-home').addEventListener('click', function() {
+          w.style.display = 'none';
+          o.style.display = 'none';
+        });
       }
     });
   </script>

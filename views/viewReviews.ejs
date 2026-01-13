@@ -4,155 +4,219 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Reviews & Ratings | Rally AI</title>
-    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <style>
+        /* --- GLOBAL BACKGROUND FROM INDEX.EJS --- */
+        body { 
+            margin: 0; padding: 0; 
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; 
+            min-height: 100vh;
+            display: flex; 
+            flex-direction: column;
+            
+            /* Parallax Background */
+            background: url('/images/k.jpg') no-repeat center center fixed; 
+            background-size: cover;
+            position: relative;
+            color: white; /* Default text color */
+        }
+
+        /* Dark Overlay */
+        body::before {
+            content: "";
+            position: absolute;
+            top: 0; left: 0;
+            width: 100%; height: 100%;
+            background: rgba(0, 0, 0, 0.75); /* Slightly darker than index for readability of reviews */
+            z-index: 0;
+            pointer-events: none;
+            position: fixed; /* Ensures overlay stays fixed during scroll */
+        }
+
+        /* Ensure content sits above overlay */
+        .content-wrapper {
+            position: relative;
+            z-index: 1;
+            flex: 1;
+        }
+
+        /* --- NAVBAR STYLES --- */
+        nav { position: relative; z-index: 10; }
+        .navbar-custom { background-color: #eef6ff; padding: 15px 20px; }
+        .navbar-brand { font-size: 1.5rem; font-weight: bold; color: black !important; }
+        .nav-link { font-weight: bold; color: black !important; }
+
+        /* Bootstrap/Tailwind Conflict Fixes */
+        a { text-decoration: none; }
+    </style>
 </head>
-<body class="bg-[#0f172a] text-slate-200 min-h-screen p-4 md:p-8">
+<body>
 
-    <div class="max-w-4xl mx-auto">
-        <div class="bg-slate-800 rounded-2xl p-6 border border-slate-700 shadow-xl mb-8">
-            <div class="flex justify-between items-center mb-6">
-                <h2 class="text-2xl font-bold text-white">Review Statistics</h2>
-                <a href="/" class="text-sm text-slate-400 hover:text-white"><i class="fas fa-arrow-left me-2"></i>Back to Home</a>
-            </div>
-            
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-8 items-center">
-                <div class="text-center md:border-r md:border-slate-700">
-                    <h1 class="text-6xl font-black text-violet-500">
-                        <%= stats.avgRating ? Number(stats.avgRating).toFixed(1) : "0.0" %>
-                    </h1>
-                    <div class="text-yellow-400 my-2">
-                        <% for(let i=1; i<=5; i++) { %>
-                            <i class="<%= i <= Math.round(stats.avgRating || 0) ? 'fas' : 'far' %> fa-star"></i>
-                        <% } %>
-                    </div>
-                    <p class="text-slate-400 text-sm">Based on <%= stats.totalReviews %> reviews</p>
+    <%- include('partials/navbar.ejs') %>
+
+    <div class="content-wrapper p-4 md:p-8">
+        
+        <div class="max-w-4xl mx-auto">
+            <div class="bg-slate-800/90 backdrop-blur-sm rounded-2xl p-6 border border-slate-700 shadow-xl mb-8">
+                <div class="flex justify-between items-center mb-6">
+                    <h2 class="text-2xl font-bold text-white">Review Statistics</h2>
+                    <a href="/" class="text-sm text-slate-400 hover:text-white transition-colors">
+                        <i class="fas fa-arrow-left me-2"></i>Back to Home
+                    </a>
                 </div>
-
-                <div class="space-y-3">
-                    <% [5,4,3,2,1].forEach(num => { 
-                        const count = stats['star' + num] || 0;
-                        const percent = stats.totalReviews > 0 ? (count / stats.totalReviews) * 100 : 0;
-                    %>
-                    <div class="flex items-center gap-4 text-sm">
-                        <span class="w-12 text-slate-400"><%= num %> stars</span>
-                        <div class="flex-1 h-3 bg-slate-700 rounded-full overflow-hidden">
-                            <div class="h-full bg-violet-500" style="width: <%= percent %>%"></div>
+                
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-8 items-center">
+                    <div class="text-center md:border-r md:border-slate-700">
+                        <h1 class="text-6xl font-black text-violet-500">
+                            <%= stats.avgRating ? Number(stats.avgRating).toFixed(1) : "0.0" %>
+                        </h1>
+                        <div class="text-yellow-400 my-2 text-xl">
+                            <% for(let i=1; i<=5; i++) { %>
+                                <i class="<%= i <= Math.round(stats.avgRating || 0) ? 'fas' : 'far' %> fa-star"></i>
+                            <% } %>
                         </div>
-                        <span class="w-8 text-right text-slate-500"><%= count %></span>
-                    </div>
-                    <% }) %>
-                </div>
-            </div>
-        </div>
-
-        <% if (session.user) { %>
-            <div class="bg-slate-800/50 rounded-2xl p-6 border border-slate-700 mb-8">
-                <h3 class="text-lg font-bold text-white mb-4">Write a Review</h3>
-                <form action="/add-review" method="POST" class="space-y-4">
-                    <input type="hidden" name="content_id" value="<%= contentId %>">
-                    
-                    <div>
-                        <label class="block text-sm text-slate-400 mb-1">Rating</label>
-                        <select name="rating" class="bg-slate-900 border border-slate-600 rounded-lg p-2 w-full text-white">
-                            <option value="5">5 - Excellent</option>
-                            <option value="4">4 - Good</option>
-                            <option value="3">3 - Average</option>
-                            <option value="2">2 - Poor</option>
-                            <option value="1">1 - Terrible</option>
-                        </select>
+                        <p class="text-slate-400 text-sm">Based on <%= stats.totalReviews %> reviews</p>
                     </div>
 
-                    <div>
-                        <label class="block text-sm text-slate-400 mb-1">Your Comment</label>
-                        <textarea name="comment" rows="3" class="bg-slate-900 border border-slate-600 rounded-lg p-3 w-full text-white" placeholder="What did you think?"></textarea>
+                    <div class="space-y-3">
+                        <% [5,4,3,2,1].forEach(num => { 
+                            const count = stats['star' + num] || 0;
+                            const percent = stats.totalReviews > 0 ? (count / stats.totalReviews) * 100 : 0;
+                        %>
+                        <div class="flex items-center gap-4 text-sm">
+                            <span class="w-12 text-slate-400"><%= num %> stars</span>
+                            <div class="flex-1 h-3 bg-slate-700 rounded-full overflow-hidden">
+                                <div class="h-full bg-violet-500" style="width: <%= percent %>%"></div>
+                            </div>
+                            <span class="w-8 text-right text-slate-500"><%= count %></span>
+                        </div>
+                        <% }) %>
                     </div>
-
-                    <button type="submit" class="bg-violet-600 hover:bg-violet-700 text-white font-bold py-2 px-6 rounded-lg transition">
-                        Submit Review
-                    </button>
-                </form>
-            </div>
-        <% } else { %>
-            <div class="bg-violet-900/20 rounded-2xl p-8 border border-violet-500/30 mb-8 text-center">
-                <div class="inline-flex items-center justify-center w-12 h-12 bg-violet-500/20 rounded-full mb-4">
-                    <i class="fas fa-lock text-violet-400"></i>
-                </div>
-                <h3 class="text-xl font-bold text-white mb-2">Share your thoughts!</h3>
-                <p class="text-slate-400 mb-6">You need to be logged in to leave a rating and review.</p>
-                <div class="flex gap-4 justify-center">
-                    <a href="/login" class="bg-violet-600 hover:bg-violet-700 text-white font-bold py-2 px-8 rounded-full transition">Login</a>
-                    <a href="/register" class="bg-slate-700 hover:bg-slate-600 text-white font-bold py-2 px-8 rounded-full transition">Register</a>
                 </div>
             </div>
-        <% } %>
 
-        <div class="space-y-4">
-            <h3 class="text-xl font-bold text-white flex items-center gap-2">
-                <i class="fas fa-users text-violet-500"></i> Community Feedback
-            </h3>
-            
-            <% if (reviews.length === 0) { %>
-                <div class="text-center py-10 bg-slate-800/30 rounded-xl border border-dashed border-slate-700">
-                    <p class="text-slate-500 italic">No reviews yet. Be the first to share your experience!</p>
+            <% if (session.user) { %>
+                <div class="bg-slate-800/80 backdrop-blur-sm rounded-2xl p-6 border border-slate-700 mb-8">
+                    <h3 class="text-lg font-bold text-white mb-4">Write a Review</h3>
+                    <form action="/add-review" method="POST" class="space-y-4">
+                        <input type="hidden" name="content_id" value="<%= contentId %>">
+                        
+                        <div>
+                            <label class="block text-sm text-slate-400 mb-1">Rating</label>
+                            <select name="rating" class="bg-slate-900 border border-slate-600 rounded-lg p-2 w-full text-white focus:border-violet-500 outline-none">
+                                <option value="5">5 - Excellent</option>
+                                <option value="4">4 - Good</option>
+                                <option value="3">3 - Average</option>
+                                <option value="2">2 - Poor</option>
+                                <option value="1">1 - Terrible</option>
+                            </select>
+                        </div>
+
+                        <div>
+                            <label class="block text-sm text-slate-400 mb-1">Your Comment</label>
+                            <textarea name="comment" rows="3" class="bg-slate-900 border border-slate-600 rounded-lg p-3 w-full text-white focus:border-violet-500 outline-none" placeholder="What did you think?"></textarea>
+                        </div>
+
+                        <button type="submit" class="bg-violet-600 hover:bg-violet-700 text-white font-bold py-2 px-6 rounded-lg transition duration-200">
+                            Submit Review
+                        </button>
+                    </form>
+                </div>
+            <% } else { %>
+                <div class="bg-violet-900/40 backdrop-blur-sm rounded-2xl p-8 border border-violet-500/30 mb-8 text-center">
+                    <div class="inline-flex items-center justify-center w-12 h-12 bg-violet-500/20 rounded-full mb-4">
+                        <i class="fas fa-lock text-violet-400"></i>
+                    </div>
+                    <h3 class="text-xl font-bold text-white mb-2">Share your thoughts!</h3>
+                    <p class="text-slate-300 mb-6">You need to be logged in to leave a rating and review.</p>
+                    <div class="flex gap-4 justify-center">
+                        <a href="/login" class="bg-violet-600 hover:bg-violet-700 text-white font-bold py-2 px-8 rounded-full transition no-underline">Login</a>
+                        <a href="/register" class="bg-slate-700 hover:bg-slate-600 text-white font-bold py-2 px-8 rounded-full transition no-underline">Register</a>
+                    </div>
                 </div>
             <% } %>
 
-            <% reviews.forEach(review => { %>
-                <div class="bg-slate-800 p-5 rounded-xl border border-slate-700 relative">
-                    <div class="flex justify-between items-start">
-                        <div class="flex items-center gap-3">
-                            <div class="w-10 h-10 bg-violet-500/10 rounded-full flex items-center justify-center text-violet-400 font-bold">
-                                <%= review.username.charAt(0).toUpperCase() %>
-                            </div>
-                            <div>
-                                <span class="font-bold text-violet-300">@<%= review.username %></span>
-                                <div class="text-yellow-500 text-xs mt-1">
-                                    <% for(let i=1; i<=5; i++) { %>
-                                        <i class="<%= i <= review.rating ? 'fas' : 'far' %> fa-star"></i>
-                                    <% } %>
+            <div class="space-y-4">
+                <h3 class="text-xl font-bold text-white flex items-center gap-2">
+                    <i class="fas fa-users text-violet-500"></i> Community Feedback
+                </h3>
+                
+                <% if (reviews.length === 0) { %>
+                    <div class="text-center py-10 bg-slate-800/50 backdrop-blur-sm rounded-xl border border-dashed border-slate-700">
+                        <p class="text-slate-400 italic">No reviews yet. Be the first to share your experience!</p>
+                    </div>
+                <% } %>
+
+                <% reviews.forEach(review => { %>
+                    <div class="bg-slate-800/90 backdrop-blur-sm p-5 rounded-xl border border-slate-700 relative hover:border-slate-600 transition duration-300">
+                        <div class="flex justify-between items-start">
+                            <div class="flex items-center gap-3">
+                                <div class="w-10 h-10 bg-violet-500/10 rounded-full flex items-center justify-center text-violet-400 font-bold border border-violet-500/20">
+                                    <%= review.username.charAt(0).toUpperCase() %>
+                                </div>
+                                <div>
+                                    <span class="font-bold text-violet-300">@<%= review.username %></span>
+                                    <div class="text-yellow-500 text-xs mt-1">
+                                        <% for(let i=1; i<=5; i++) { %>
+                                            <i class="<%= i <= review.rating ? 'fas' : 'far' %> fa-star"></i>
+                                        <% } %>
+                                    </div>
                                 </div>
                             </div>
+                            <span class="text-slate-500 text-xs bg-slate-900 px-2 py-1 rounded"><%= new Date(review.createdAt).toLocaleDateString() %></span>
                         </div>
-                        <span class="text-slate-500 text-xs"><%= new Date(review.created_at).toLocaleDateString() %></span>
-                    </div>
-                    
-                    <p class="text-slate-300 mt-4 leading-relaxed"><%= review.comment %></p>
+                        
+                        <p class="text-slate-300 mt-4 leading-relaxed"><%= review.comment %></p>
 
-                    <% if (session.user && (session.user.userId === review.reviewedByUserId || session.user.userRole === 'admin')) { %>
-                        <div class="mt-4 flex gap-4 border-t border-slate-700 pt-4">
-                            <button onclick="toggleEdit('<%= review.reviewId %>')" class="text-xs text-blue-400 hover:underline">
-                                <i class="fas fa-edit me-1"></i>Edit
-                            </button>
-                            <form action="/delete-review/<%= review.reviewId %>" method="POST" onsubmit="return confirm('Delete this review?')">
-                                <button type="submit" class="text-xs text-red-400 hover:underline">
-                                    <i class="fas fa-trash me-1"></i>Delete
+                        <% if (session.user && (session.user.userId === review.reviewedByUserId || session.user.userRole === 'admin')) { %>
+                            <div class="mt-4 flex gap-4 border-t border-slate-700 pt-4">
+                                <button onclick="toggleEdit('<%= review.reviewId %>')" class="text-xs text-blue-400 hover:text-blue-300 transition-colors flex items-center gap-1">
+                                    <i class="fas fa-edit"></i> Edit
                                 </button>
-                            </form>
-                        </div>
+                                <form action="/delete-review/<%= review.reviewId %>" method="POST" onsubmit="return confirm('Delete this review?')">
+                                    <button type="submit" class="text-xs text-red-400 hover:text-red-300 transition-colors flex items-center gap-1">
+                                        <i class="fas fa-trash"></i> Delete
+                                    </button>
+                                </form>
+                            </div>
 
-                        <form id="edit-form-<%= review.reviewId %>" action="/edit-review" method="POST" class="hidden mt-4 bg-slate-900 p-4 rounded-lg">
-                            <input type="hidden" name="review_id" value="<%= review.reviewId %>">
-                            <div class="mb-3">
-                                <label class="block text-xs text-slate-500 mb-1">Update Rating</label>
-                                <select name="rating" class="bg-slate-800 border border-slate-600 p-1 rounded text-sm text-white">
-                                    <% [5,4,3,2,1].forEach(r => { %>
-                                        <option value="<%= r %>" <%= review.rating == r ? 'selected' : '' %>><%= r %> Stars</option>
-                                    <% }) %>
-                                </select>
-                            </div>
-                            <textarea name="comment" class="w-full bg-slate-800 border border-slate-600 p-2 rounded text-sm text-white mb-2"><%= review.comment %></textarea>
-                            <div class="flex gap-2">
-                                <button type="submit" class="bg-blue-600 text-white px-4 py-1 rounded text-xs">Update</button>
-                                <button type="button" onclick="toggleEdit('<%= review.reviewId %>')" class="bg-slate-700 text-white px-4 py-1 rounded text-xs">Cancel</button>
-                            </div>
-                        </form>
-                    <% } %>
-                </div>
-            <% }) %>
+                            <form id="edit-form-<%= review.reviewId %>" action="/edit-review" method="POST" class="hidden mt-4 bg-slate-900/80 p-4 rounded-lg border border-slate-700">
+                                <input type="hidden" name="review_id" value="<%= review.reviewId %>">
+                                <div class="mb-3">
+                                    <label class="block text-xs text-slate-500 mb-1">Update Rating</label>
+                                    <select name="rating" class="bg-slate-800 border border-slate-600 p-1 rounded text-sm text-white w-full outline-none focus:border-blue-500">
+                                        <% [5,4,3,2,1].forEach(r => { %>
+                                            <option value="<%= r %>" <%= review.rating == r ? 'selected' : '' %>><%= r %> Stars</option>
+                                        <% }) %>
+                                    </select>
+                                </div>
+                                <textarea name="comment" class="w-full bg-slate-800 border border-slate-600 p-2 rounded text-sm text-white mb-2 outline-none focus:border-blue-500"><%= review.comment %></textarea>
+                                <div class="flex gap-2">
+                                    <button type="submit" class="bg-blue-600 hover:bg-blue-500 text-white px-4 py-1 rounded text-xs transition">Update</button>
+                                    <button type="button" onclick="toggleEdit('<%= review.reviewId %>')" class="bg-slate-700 hover:bg-slate-600 text-white px-4 py-1 rounded text-xs transition">Cancel</button>
+                                </div>
+                            </form>
+                        <% } %>
+                    </div>
+                <% }) %>
+            </div>
         </div>
     </div>
 
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+
+    <script>
+        function toggleEdit(id) {
+            const form = document.getElementById('edit-form-' + id);
+            form.classList.toggle('hidden');
+        }
+    </script>
+</body>
+</html>
     
 
     <script>

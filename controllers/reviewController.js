@@ -10,7 +10,7 @@ exports.addReview = (req, res) => {
     const { content_id, rating, comment } = req.body;
     const userId = req.session.user.userId;
 
-    // Corrected column names: reviewedByUserId, contentId, rating, comment
+    // SCHEMA MATCH: Uses 'rating'
     const sql = 'INSERT INTO reviews (reviewedByUserId, contentId, rating, comment) VALUES (?, ?, ?, ?)';
     
     db.query(sql, [userId, content_id, rating, comment], (err, result) => {
@@ -25,49 +25,47 @@ exports.addReview = (req, res) => {
 
 // GET /content/:id/reviews
 exports.getReviews = (req, res) => {
-    const contentId = req.params.id;
+    const contentId = req.params.id || 1; 
 
-    // Notice: We do NOT check for req.session.user here. 
-    // This allows guests to reach this part of the code.
-
-    const reviewsSql = `
+    // SCHEMA MATCH: Sorts by 'createdAt'
+    const sql = `
         SELECT reviews.*, users.username 
         FROM reviews 
         JOIN users ON reviews.reviewedByUserId = users.userId 
         WHERE contentId = ? 
-        ORDER BY created_at DESC`;
+        ORDER BY createdAt DESC
+    `;
 
-    db.query(reviewsSql, [contentId], (err, reviews) => {
+    db.query(sql, [contentId], (err, results) => {
         if (err) {
             console.error('Error fetching reviews:', err);
-            return res.status(500).send('Database error.');
+            return res.status(500).send('Error loading reviews');
         }
 
-        const statsSql = `
-            SELECT 
-                AVG(rating) as avgRating, 
-                COUNT(*) as totalReviews,
-                COUNT(CASE WHEN rating = 5 THEN 1 END) as star5,
-                COUNT(CASE WHEN rating = 4 THEN 1 END) as star4,
-                COUNT(CASE WHEN rating = 3 THEN 1 END) as star3,
-                COUNT(CASE WHEN rating = 2 THEN 1 END) as star2,
-                COUNT(CASE WHEN rating = 1 THEN 1 END) as star1
-            FROM reviews WHERE contentId = ?`;
+        // Calculate Stats using 'rating'
+        let totalStars = 0;
+        let starCounts = { star1: 0, star2: 0, star3: 0, star4: 0, star5: 0 };
 
-        db.query(statsSql, [contentId], (err, statsResults) => {
-            if (err) {
-                console.error('Error fetching statistics:', err);
-                return res.status(500).send('Database error.');
+        results.forEach(review => {
+            const r = parseInt(review.rating); // Uses 'rating'
+            totalStars += r;
+            
+            if (r >= 1 && r <= 5) {
+                starCounts['star' + r]++;
             }
+        });
 
-            // We pass session to the view. If session.user is null, 
-            // the view will know the user is a guest.
-            res.render('viewReviews', { 
-                reviews: reviews, 
-                stats: statsResults[0], 
-                contentId: contentId,
-                session: req.session 
-            });
+        const stats = {
+            totalReviews: results.length,
+            avgRating: results.length > 0 ? (totalStars / results.length).toFixed(1) : 0,
+            ...starCounts
+        };
+
+        res.render('viewreviews', { 
+            reviews: results, 
+            stats: stats, 
+            contentId: contentId,
+            session: req.session 
         });
     });
 };
@@ -79,7 +77,7 @@ exports.editReview = (req, res) => {
     const { rating, comment, review_id } = req.body;
     const userId = req.session.user.userId;
 
-    // Updated WHERE clause to use reviewId and reviewedByUserId
+    // SCHEMA MATCH: Updates 'rating'
     const sql = 'UPDATE reviews SET rating = ?, comment = ? WHERE reviewId = ? AND reviewedByUserId = ?';
     
     db.query(sql, [rating, comment, review_id, userId], (err, result) => {

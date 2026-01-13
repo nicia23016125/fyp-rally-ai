@@ -3,98 +3,128 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Choose Your Plan | Rally AI</title>
+  <title>Your Subscription | Rally AI</title>
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
   <style>
     .pricing-card { border-radius: 15px; transition: 0.3s; border: none; overflow: hidden; height: 100%; }
-    .pricing-card:hover { transform: translateY(-10px); box-shadow: 0 15px 35px rgba(0,0,0,0.1); }
-    .plan-price { font-size: 2.5rem; font-weight: bold; }
-    .feature-list { list-style: none; padding: 0; }
-    .feature-list li { margin-bottom: 10px; color: #555; }
-    .feature-list i { color: #198754; margin-right: 10px; }
+    .pricing-card:hover { transform: translateY(-5px); box-shadow: 0 10px 25px rgba(0,0,0,0.1); }
+    .confirm-box { background: #f8f9fa; border: 1px solid #dee2e6; border-radius: 12px; padding: 20px; margin-top: 15px; }
   </style>
 </head>
 <body class="bg-light">
   <%- include('partials/navbar.ejs') %>
 
   <div class="container py-5">
-    <div class="text-center mb-5">
-      <h1 class="fw-bold">Ready to Supercharge Your Content?</h1>
-      <p class="text-muted">Choose the membership plan that fits your production needs.</p>
-    </div>
-
-    <div class="row row-cols-1 row-cols-md-3 g-4">
-      <% if (plans && plans.length > 0) { %>
-        <% plans.forEach(plan => { %>
-          <div class="col">
-            <div class="card pricing-card shadow-sm">
-              <div class="card-body p-4 text-center">
-                <h4 class="fw-bold"><%= plan.planName %></h4>
-                <div class="plan-price my-3">$<%= plan.price %> <small class="text-muted fs-6">/month</small></div>
-                
-                <hr>
-                
-                <ul class="feature-list text-start my-4">
-                  <li><i class="fas fa-check-circle"></i> <strong><%= plan.aiGenerationLimit %></strong> AI Generations</li>
-                  <li><i class="fas fa-check-circle"></i> <strong><%= plan.businessLimit %></strong> Business Projects</li>
-                  <li><i class="fas fa-check-circle"></i> <%= plan.templateAccess %> Access</li>
-                  <li><i class="fas fa-check-circle"></i> Valid for 30 days</li>
-                </ul>
-
-                <form action="/subscribe" method="POST">
-                  <input type="hidden" name="planId" value="<%= plan.planId %>">
-                  <button type="submit" class="btn <%= plan.planName === 'Personal' ? 'btn-primary' : 'btn-outline-dark' %> rounded-pill w-100 fw-bold">
-                    Select <%= plan.planName %>
-                  </button>
-                </form>
-              </div>
+    
+    <div class="row justify-content-center mb-5">
+      <div class="col-md-8">
+        
+        <div class="card shadow-lg border-0 rounded-4 overflow-hidden">
+          <div class="card-header bg-dark text-white p-4 text-center">
+             <h2 class="mb-0"><%= subscription.plan_name %> Plan</h2>
+             <span class="badge bg-success mt-2"><%= subscription.status %></span>
+          </div>
+          
+          <div class="card-body p-5">
+            <div class="row text-center mb-4">
+               <div class="col-6">
+                 <h6 class="text-muted">Remaining Credits</h6>
+                 <h1 class="fw-bold text-primary"><%= subscription.credit %></h1>
+               </div>
+               <div class="col-6">
+                 <h6 class="text-muted">Generation Limit</h6>
+                 <h1 class="fw-bold"><%= subscription.ai_generation_limit %></h1>
+               </div>
             </div>
+
+            <hr>
+
+            <ul class="list-group list-group-flush my-4">
+              <li class="list-group-item d-flex justify-content-between align-items-center">
+                 <strong><i class="fas fa-calendar-alt me-2 text-muted"></i> Start Date:</strong>
+                 <span><%= new Date(subscription.start_date).toDateString() %></span>
+              </li>
+              <li class="list-group-item d-flex justify-content-between align-items-center">
+                 <strong><i class="fas fa-hourglass-end me-2 text-muted"></i> Expiration Date:</strong>
+                 <span><%= subscription.end_date ? new Date(subscription.end_date).toDateString() : 'Lifetime' %></span>
+              </li>
+              <li class="list-group-item d-flex justify-content-between align-items-center">
+                 <strong><i class="fas fa-layer-group me-2 text-muted"></i> Template Access:</strong>
+                 <span class="badge bg-info text-dark"><%= subscription.template_access %></span>
+              </li>
+            </ul>
+
+            <div class="d-grid gap-2">
+              <a href="/chat" class="btn btn-primary btn-lg rounded-pill">Go to Video Generation</a>
+              <a href="/" class="btn btn-outline-secondary rounded-pill">Back to homepage</a>
+            </div>
+
           </div>
-        <% }); %>
-      <% } else { %>
-        <div class="col-12 text-center">
-          <div class="alert alert-info">No subscription plans available at the moment.</div>
         </div>
-      <% } %>
+
+      </div>
     </div>
-  </div>
 
-  <div class="text-center mb-5"><h2 class="fw-bold">Flexible Membership Plans</h2></div>
+    <hr class="my-5">
+
+    <div class="text-center mb-5">
+        <h3 class="fw-bold">Other Available Plans</h3>
+        <p class="text-muted">Upgrade or switch your plan below.</p>
+    </div>
+
     <div class="row row-cols-1 row-cols-md-3 g-4">
-      
-      <div class="col">
-        <div class="card h-100 pricing-card shadow-sm">
-          <div class="card-body p-4 text-center">
-            <h4>Pay-As-You-Go</h4>
-            <h2>$0.75 <small>/clip</small></h2>
-            <a href="/subscriptions" class="btn btn-outline-dark rounded-pill mt-3">Get Started</a>
-          </div>
-        </div>
-      </div>
+        <% if(plans) { plans.forEach(plan => { %>
+            <div class="col">
+                <div class="card pricing-card shadow-sm <%= plan.name === 'Personal' ? 'border-primary' : '' %>">
+                    <div class="card-body p-4 text-center">
+                        
+                        <% if(plan.name === 'Personal') { %>
+                            <div class="badge bg-primary mb-2">Most Popular</div>
+                        <% } %>
 
-      <div class="col">
-        <div class="card h-100 pricing-card border-primary shadow">
-          <div class="card-body p-4 text-center">
-            <div class="badge bg-primary mb-2">Popular</div>
-            <h4>Personal</h4>
-            <h2>$25 <small>/month</small></h2>
-            <p>60 Credits</p>
-            <a href="/subscriptions" class="btn btn-primary rounded-pill mt-3">Join Personal</a>
-          </div>
-        </div>
-      </div>
+                        <h4 class="fw-bold"><%= plan.name %></h4>
+                        <h2 class="my-3">$<%= plan.price %> <small class="text-muted fs-6">/<%= plan.billing %></small></h2>
+                        
+                        <ul class="list-unstyled text-muted small mb-4">
+                            <li><strong><%= plan.credit %></strong> Credits</li>
+                            <li><strong><%= plan.limit %></strong> Generations/mo</li>
+                            <li><%= plan.template %> Access</li>
+                        </ul>
 
-      <div class="col">
-        <div class="card h-100 pricing-card shadow-sm">
-          <div class="card-body p-4 text-center">
-            <h4>Production</h4>
-            <h2>$120 <small>/month</small></h2>
-            <p>400 Credits</p>
-            <a href="/subscriptions" class="btn btn-dark rounded-pill mt-3">Go Production</a>
-          </div>
-        </div>
-      </div>
+                        <button class="btn <%= plan.name === 'Personal' ? 'btn-primary' : 'btn-outline-dark' %> rounded-pill w-100 fw-bold" 
+                                type="button" 
+                                data-bs-toggle="collapse" 
+                                data-bs-target="#planForm<%= plan.id %>">
+                            Select <%= plan.name %>
+                        </button>
+                        
+                        <div class="collapse mt-3" id="planForm<%= plan.id %>">
+                            <div class="confirm-box text-start">
+                                <form action="/subscribe" method="POST">
+                                    <input type="hidden" name="planId" value="<%= plan.id %>">
+                                    
+                                    <label class="form-label small fw-bold">Duration:</label>
+                                    <select name="months" class="form-select form-select-sm mb-3">
+                                        <option value="1">1 Month</option>
+                                        <option value="3">3 Months</option>
+                                        <option value="12">1 Year</option>
+                                    </select>
+                                    
+                                    <button type="submit" class="btn btn-success btn-sm w-100 fw-bold">
+                                        Confirm Purchase
+                                    </button>
+                                </form>
+                            </div>
+                        </div>
+
+                    </div>
+                </div>
+            </div>
+        <% }); } %>
+    </div>
+
+  </div>
 
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 </body>

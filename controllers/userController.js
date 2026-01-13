@@ -218,27 +218,54 @@ exports.deleteUser = (req, res) => {
     });
 };
 
-
-
-// ✅ Fetch the logged-in user's profile
+// ✅ Fetch the logged-in user's profile AND their active subscription
+// ✅ Fetch the logged-in user's profile, active subscription, AND generated videos
 exports.getMyself = (req, res) => {
     const userId = req.session.user.userId;
-    const sql = 'SELECT * FROM users WHERE userId = ?';
 
-    db.query(sql, [userId], (error, results) => {
+    // Query 1: Get User Details
+    const userSql = 'SELECT * FROM users WHERE userId = ?';
+    
+    db.query(userSql, [userId], (error, userResults) => {
         if (error) {
             console.error('Database query error:', error.message);
             return res.status(500).send('Error retrieving user profile');
         }
 
-        if (results.length > 0) {
-            res.render('viewMyself', { userProfile: results[0] });
+        if (userResults.length > 0) {
+            // Query 2: Get Active Subscription
+            const subSql = 'SELECT * FROM subscriptions_combined WHERE user_id = ? AND status = "active" LIMIT 1';
+
+            db.query(subSql, [userId], (subError, subResults) => {
+                if (subError) {
+                    console.error('Subscription query error:', subError);
+                    // Continue even if subscription fails, just pass null
+                    subResults = []; 
+                }
+
+                // Query 3: Get Generated Videos
+                const vidSql = 'SELECT * FROM generated_videos WHERE user_id = ? ORDER BY created_at DESC';
+
+                db.query(vidSql, [userId], (vidError, vidResults) => {
+                    if (vidError) {
+                        console.error('Video query error:', vidError);
+                        vidResults = []; // Fail gracefully, just show empty list
+                    }
+
+                    // Render with user, subscription, and video data
+                    res.render('viewMyself', { 
+                        userProfile: userResults[0], 
+                        subscription: subResults.length > 0 ? subResults[0] : null,
+                        videos: vidResults // Pass videos array to EJS
+                    });
+                });
+            });
+
         } else {
             res.status(404).send('User not found');
         }
     });
 };
-
 // ✅ Edit Profile Form for Logged-in User
 exports.editMyselfForm = (req, res) => {
     if (!req.session.user) {
