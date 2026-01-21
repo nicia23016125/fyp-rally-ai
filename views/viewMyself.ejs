@@ -54,9 +54,9 @@
         border-left: 5px solid #0d6efd;
     }
 
-    /* --- NEW STYLES FOR VIDEO GALLERY --- */
+    /* --- VIDEO GALLERY STYLES --- */
     .video-gallery-container {
-      max-width: 1000px; /* Wider for grid */
+      max-width: 1000px;
       margin-top: 30px;
       background-color: rgba(255, 255, 255, 0.95);
       color: black;
@@ -87,7 +87,6 @@
   <div class="container d-flex flex-column align-items-center py-5">
     
     <div class="profile-container text-center w-100 mb-4">
-      
       <h2 class="mb-4">My Profile</h2>
       <img src="/images/<%= userProfile.userImage %>" class="profile-image mb-3" alt="Profile Image">
       <h4><%= userProfile.username %></h4>
@@ -132,7 +131,6 @@
       <% } %>
     </div>
 
-
     <div class="video-gallery-container w-100">
         <h4 class="mb-4 text-start"><i class="fas fa-film text-danger me-2"></i>My Generated Videos</h4>
         
@@ -151,7 +149,19 @@
                                 <p class="video-prompt" title="<%= video.prompt %>">"<%= video.prompt %>"</p>
                                 <div class="d-flex justify-content-between align-items-center mt-2">
                                     <span class="video-date"><i class="far fa-calendar-alt me-1"></i><%= new Date(video.created_at).toLocaleDateString() %></span>
-                                    <a href="<%= video.file_path %>" download class="download-link"><i class="fas fa-download me-1"></i> Save</a>
+                                    
+                                    <div class="d-flex align-items-center">
+                                        <a href="<%= video.file_path %>" download class="download-link me-3">
+                                            <i class="fas fa-download me-1"></i> Save
+                                        </a>
+
+                                        <a href="javascript:void(0)" 
+                                           onclick="handleSaveToDrive('<%= video.file_path %>', '<%= video.video_id %>', this)" 
+                                           class="text-success text-decoration-none fw-bold" 
+                                           style="font-size: 0.85rem; cursor: pointer;">
+                                            <i class="fab fa-google-drive me-1"></i> Drive
+                                        </a>
+                                    </div>
                                 </div>
                             </div>
                         </div>
@@ -168,6 +178,86 @@
     </div>
 
   </div>
+
+  <script>
+    async function handleSaveToDrive(fileUrl, videoId, btnElement) {
+        // 1. Check if Google Tokens exist in session (safely checking undefined)
+        const isGoogleLoggedIn = <%= (typeof tokens !== 'undefined' && tokens) ? 'true' : 'false' %>; 
+
+        if (!isGoogleLoggedIn) {
+            console.log("Not connected to Google. Redirecting to Auth...");
+            // Encode state so backend knows to return to /viewMyself
+            const state = encodeURIComponent(JSON.stringify({ 
+                action: 'save_to_drive', 
+                fileUrl: fileUrl,
+                returnTo: '/viewMyself' 
+            }));
+            window.location.href = `/auth/google?state=${state}`;
+            return;
+        }
+
+        // 2. UI Feedback (Spinner)
+        const originalContent = btnElement.innerHTML;
+        btnElement.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Uploading...';
+        btnElement.style.pointerEvents = 'none'; // Prevent double-click
+        
+        try {
+            const response = await fetch('/drive/upload', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ 
+                    fileUrl: fileUrl, 
+                    fileName: `RallyAI_Video_${videoId}.mp4` 
+                })
+            });
+            
+            const result = await response.json();
+            
+            if (result.success) {
+                alert("✅ Saved to Google Drive!");
+                // Optional: Change button permanently to indicate success
+                btnElement.innerHTML = '<i class="fas fa-check"></i> Saved';
+            } else {
+                throw new Error(result.error || "Unknown Error");
+            }
+        } catch (err) {
+            console.error(err);
+            alert("❌ Upload Failed: " + err.message);
+            btnElement.innerHTML = originalContent; // Revert text on error
+        } finally {
+            btnElement.style.pointerEvents = 'auto'; // Re-enable clicks
+        }
+    }
+
+    // Auto-save logic if returning from Google Auth redirect
+    window.addEventListener('load', () => {
+        const urlParams = new URLSearchParams(window.location.search);
+        if (urlParams.get('autosave') === 'true') {
+            const fileUrl = urlParams.get('fileUrl');
+            
+            // Remove parameters from URL to prevent re-upload loop
+            window.history.replaceState({}, document.title, window.location.pathname);
+            
+            alert("🔄 Completing your Save to Drive...");
+            
+            // Trigger upload (we don't have the button element, so no spinner)
+            fetch('/drive/upload', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ 
+                    fileUrl: fileUrl, 
+                    fileName: `RallyAI_Video_AutoSaved.mp4` 
+                })
+            })
+            .then(res => res.json())
+            .then(data => {
+                if(data.success) alert("✅ Auto-save successful!");
+                else alert("❌ Auto-save failed: " + data.error);
+            })
+            .catch(err => console.error(err));
+        }
+    });
+  </script>
 
 </body>
 </html>

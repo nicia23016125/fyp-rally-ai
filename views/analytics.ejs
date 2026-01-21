@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Admin Analytics</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-100 p-10">
+
+    <div class="max-w-7xl mx-auto">
+        <div class="flex justify-between items-center mb-10">
+            <h1 class="text-3xl font-bold text-gray-800">Video Gen Analytics</h1>
+            
+            <div class="flex gap-4 items-center bg-white p-4 rounded-lg shadow-sm border border-gray-200">
+                <input type="date" id="startDate" class="border rounded px-3 py-1 text-sm">
+                <span class="text-gray-400">to</span>
+                <input type="date" id="endDate" class="border rounded px-3 py-1 text-sm">
+                <button id="updateBtn" class="bg-blue-600 text-white px-4 py-1 rounded text-sm hover:bg-blue-700">Filter</button>
+            </div>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-10">
+            <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
+                <p class="text-sm text-gray-500 font-semibold uppercase">New Users</p>
+                <h2 id="stat-users" class="text-3xl font-bold"><%= initialData.newUsers %></h2>
+            </div>
+            <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
+                <p class="text-sm text-gray-500 font-semibold uppercase">Subscriptions</p>
+                <h2 id="stat-subs" class="text-3xl font-bold"><%= initialData.newSubs %></h2>
+            </div>
+            <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
+                <p class="text-sm text-gray-500 font-semibold uppercase">Earnings</p>
+                <h2 id="stat-earnings" class="text-3xl font-bold text-green-600">$<%= initialData.earnings %></h2>
+            </div>
+            <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
+                <p class="text-sm text-gray-500 font-semibold uppercase">Renewals</p>
+                <h2 id="stat-renewals" class="text-3xl font-bold text-orange-600"><%= initialData.renewals %></h2>
+            </div>
+        </div>
+
+        <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-100 mb-10 flex flex-wrap items-center justify-between gap-4 border-l-4 border-l-purple-500">
+            <div>
+                <h3 class="text-lg font-bold text-gray-800">Export Report</h3>
+                <p class="text-sm text-gray-500">Send current dashboard stats to an administrator's email via n8n.</p>
+            </div>
+            
+            <div class="flex gap-3">
+                <select id="adminSelect" class="border rounded-lg px-4 py-2 text-sm bg-gray-50 outline-none focus:ring-2 focus:ring-purple-400">
+                    <option value="admin@example.com">Main Admin</option>
+                    <option value="finance@example.com">Finance Manager</option>
+                </select>
+                <button id="sendReportBtn" class="bg-purple-600 text-white px-6 py-2 rounded-lg text-sm font-semibold hover:bg-purple-700 transition flex items-center gap-2">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" /></svg>
+                    Send Report
+                </button>
+            </div>
+        </div>
+        
+
+        <div class="bg-white p-8 rounded-xl shadow-sm border border-gray-100 mb-10">
+            <div class="flex justify-between items-center mb-6">
+                <h3 class="text-xl font-bold">Trends (Horizontal View)</h3>
+                <select id="metricSelector" class="border rounded-lg px-4 py-2 text-sm bg-gray-50 outline-none">
+                    <option value="revenue">Revenue ($)</option>
+                    <option value="users">New Users</option>
+                    <option value="reviews">Total Reviews</option>
+                </select>
+            </div>
+            <div class="relative h-[450px]">
+                <canvas id="trendsChart"></canvas>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let chartDataStore = { revenue: [], users: [], reviews: [] };
+        let trendsChart;
+
+        const initialDataObj = JSON.parse('<%- JSON.stringify(initialData) %>');
+        if (initialDataObj && initialDataObj.charts) { chartDataStore = initialDataObj.charts; }
+
+        function updateLineChart(metric) {
+            const ctx = document.getElementById('trendsChart').getContext('2d');
+            const dataSet = chartDataStore[metric] || [];
+            const labels = dataSet.map(d => d.label || d.month);
+            const values = dataSet.map(d => d.value);
+
+            if (trendsChart) trendsChart.destroy();
+            const colors = { revenue: '#10b981', users: '#3b82f6', reviews: '#f59e0b' };
+
+            trendsChart = new Chart(ctx, {
+                type: 'bar', 
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        label: metric.toUpperCase(),
+                        data: values,
+                        backgroundColor: (colors[metric] || '#10b981') + '80',
+                        borderColor: colors[metric] || '#10b981',
+                        borderWidth: 1
+                    }]
+                },
+                options: { indexAxis: 'y', responsive: true, maintainAspectRatio: false }
+            });
+        }
+
+        async function fetchFilteredData() {
+            const start = document.getElementById('startDate').value;
+            const end = document.getElementById('endDate').value;
+            const res = await fetch(`/api/admin/stats?startDate=${start}&endDate=${end}`);
+            const data = await res.json();
+            chartDataStore = data.charts;
+            document.getElementById('stat-users').innerText = data.summary.newUsers;
+            document.getElementById('stat-subs').innerText = data.summary.newSubs;
+            document.getElementById('stat-earnings').innerText = '$' + data.summary.earnings;
+            updateLineChart(document.getElementById('metricSelector').value);
+        }
+
+        // --- n8n INTEGRATION ---
+        document.getElementById('sendReportBtn').addEventListener('click', async () => {
+            const btn = document.getElementById('sendReportBtn');
+            const adminEmail = document.getElementById('adminSelect').value;
+            
+            const reportData = {
+                recipientEmail: adminEmail,
+                summary: {
+                    newUsers: document.getElementById('stat-users').innerText,
+                    earnings: document.getElementById('stat-earnings').innerText,
+                    subscriptions: document.getElementById('stat-subs').innerText
+                },
+                dateRange: {
+                    start: document.getElementById('startDate').value,
+                    end: document.getElementById('endDate').value
+                }
+            };
+
+            btn.disabled = true;
+            btn.innerText = 'Sending...';
+            
+
+            try {
+                await fetch('https://n8ngc.codeblazar.org/webhook-test/Analytics_Report', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(reportData)
+                });
+                alert('Report sent!');
+            } catch (e) { alert('Failed to send'); }
+            btn.disabled = false;
+            btn.innerText = 'Send Report';
+        });
+
+        window.addEventListener('DOMContentLoaded', () => {
+            updateLineChart('revenue');
+            document.getElementById('updateBtn').addEventListener('click', fetchFilteredData);
+        });
+    </script>
+</body>
+</html>

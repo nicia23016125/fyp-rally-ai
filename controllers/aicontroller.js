@@ -8,154 +8,118 @@ const genai = new GoogleGenAI({
 });
 
 exports.animateImage = async (req, res) => {
-    // 1. Auth Check
+    // 1. Initial Check
     if (!req.session.user) {
-        return res.status(401).json({ error: 'Please log in to generate videos.' });
+        return res.status(401).json({ error: 'Please log in.' });
     }
 
     const userId = req.session.user.userId;
+    const userRole = req.session.user.userRole; 
+    const isAdmin = (userRole === 'admin');
     const COST_PER_VIDEO = 2.00;
 
-    // 2. Check Credit Balance
+    console.log(`🚀 Request from User: ${userId} (Role: ${userRole})`);
+
+    // 2. Credit Check
     const checkSql = 'SELECT credit, subscription_id FROM subscriptions_combined WHERE user_id = ? AND status = "active" LIMIT 1';
 
     db.query(checkSql, [userId], async (err, results) => {
         if (err) {
-            console.error("DB Error checking credits:", err);
-            return res.status(500).json({ error: "Database error checking credits." });
+            console.error("❌ DB Error:", err);
+            return res.status(500).json({ error: "Database error." });
         }
 
-        if (results.length === 0) {
-            return res.status(403).json({ error: "INSUFFICIENT_CREDITS", message: "No active subscription found." });
+        let userSub = results[0];
+
+        if (!isAdmin) {
+            if (!userSub) return res.status(403).json({ error: "No active subscription." });
+            if (userSub.credit < COST_PER_VIDEO) return res.status(403).json({ error: "Insufficient credits." });
         }
 
-        const userSub = results[0];
-        if (userSub.credit < COST_PER_VIDEO) {
-            return res.status(403).json({ error: "INSUFFICIENT_CREDITS", message: "Not enough credits." });
-        }
-
-        // 3. Sufficient Credits -> Proceed with Google Veo
         try {
             const { image, prompt } = req.body;
-
-            if (!image || !prompt) {
-                return res.status(400).json({ error: 'Missing image or prompt' });
-            }
-
-            console.log(`🎬 Request received: "${prompt.substring(0, 30)}..." (User ID: ${userId})`);
-            
             const base64Data = image.replace(/^data:image\/\w+;base64,/, "");
 
-            // --- START GENERATION ---
+            // 3. AI Generation
+            console.log("🎬 Creating Video and API...");
             let operation = await genai.models.generateVideos({
                 model: 'veo-3.1-generate-preview',
                 prompt: prompt,
-                image: {
-                    imageBytes: base64Data,
-                    mimeType: 'image/png'
-                }
+                image: { imageBytes: base64Data, mimeType: 'image/png' }
             });
 
-            console.log("⏳ Video generation started... Waiting for result (~30-50s)");
-
-            // Polling Loop
             while (!operation.done) {
-                await new Promise(resolve => setTimeout(resolve, 5000));
-                
-                // Refresh operation status
-                operation = await genai.operations.getVideosOperation({
-                    operation: operation
-                });
-                
-                process.stdout.write("."); 
+                await new Promise(r => setTimeout(r, 5000));
+                operation = await genai.operations.getVideosOperation({ operation });
             }
-            console.log(" Done!");
 
-            // ---------------------------------------------------------
-            // 4. EXTRACT VIDEO DATA (THE FIX)
-            // ---------------------------------------------------------
-            // The API puts the data in 'result' (completed) or 'response' (long-running op)
-            const completionPayload = operation.result || operation.response;
-            const videoResult = completionPayload?.generatedVideos?.[0];
-            
+            const videoResult = (operation.result || operation.response)?.generatedVideos?.[0];
+            if (!videoResult) throw new Error("API returned no video result.");
+
+            // 4. Handle Video Data
             let videoBuffer;
             let finalBase64String;
 
-            // ★ IMPORTANT LINE A: Check if we got a download link (URI)
-            if (videoResult?.video?.uri) {
-                console.log(`📥 Downloading video from URI: ${videoResult.video.uri}`);
-                
-                // ★ IMPORTANT LINE B: Download the video using your API Key
+            if (videoResult.video?.uri) {
                 const vidResponse = await fetch(videoResult.video.uri, {
                     headers: { 'x-goog-api-key': process.env.GOOGLE_API_KEY }
                 });
-
-                if (!vidResponse.ok) {
-                    throw new Error(`Failed to download video from URI: ${vidResponse.statusText}`);
-                }
-
-                // ★ IMPORTANT LINE C: Convert download stream to Buffer
-                const arrayBuffer = await vidResponse.arrayBuffer();
-                videoBuffer = Buffer.from(arrayBuffer);
+                videoBuffer = Buffer.from(await vidResponse.arrayBuffer());
                 finalBase64String = videoBuffer.toString('base64');
-
-            } 
-            // Fallback: Check if we got raw bytes (Old API behavior)
-            else {
-                const rawBytes = videoResult?.video?.imageBytes || videoResult?.video?.bytesBase64Encoded;
-                if (rawBytes) {
-                    finalBase64String = rawBytes;
-                    videoBuffer = Buffer.from(rawBytes, 'base64');
-                }
+            } else {
+                finalBase64String = videoResult.video?.imageBytes || videoResult.video?.bytesBase64Encoded;
+                videoBuffer = Buffer.from(finalBase64String, 'base64');
             }
 
-            // Final Validation
-            if (!videoBuffer) {
-                console.log("⚠️ Full Debug:", JSON.stringify(operation, null, 2));
-                throw new Error("No video data found (neither URI nor imageBytes returned).");
-            }
-
-            // ---------------------------------------------------------
-            // 5. SAVE FILE LOCALLY
-            // ---------------------------------------------------------
+            // ============================================================
+            // 5. CHANGE: Save File (Adjusted for consistency & Native FS)
+            // ============================================================
             const filename = `video_${Date.now()}.mp4`;
-            const savePath = path.join(__dirname, '../static/generated', filename);
-            const publicUrl = `/static/generated/${filename}`;
             
-            await fs.ensureDir(path.dirname(savePath));
-            await fs.writeFile(savePath, videoBuffer);
-            console.log(`✅ Video saved locally: ${filename}`);
+            // CHANGED: Use 'public/videos' to match your Drive Controller logic
+            const saveDir = path.join(__dirname, '..', 'public', 'videos'); 
+            const savePath = path.join(saveDir, filename);
+            
+            // CHANGED: URL must match the public folder structure
+            const publicUrl = `/videos/${filename}`; 
 
-            // ---------------------------------------------------------
-            // 6. DATABASE INSERT & CREDIT DEDUCTION
-            // ---------------------------------------------------------
-            const insertVideoSql = 'INSERT INTO generated_videos (user_id, file_path, prompt, credit_cost) VALUES (?, ?, ?, ?)';
+            // CHANGED: Use standard fs.mkdirSync (recursive) instead of fs-extra
+            if (!fs.existsSync(saveDir)) {
+                fs.mkdirSync(saveDir, { recursive: true });
+            }
             
-            db.query(insertVideoSql, [userId, publicUrl, prompt, COST_PER_VIDEO], (insertErr, insertResult) => {
-                if (insertErr) {
-                    console.error("❌ Failed to save video record to DB:", insertErr);
-                } else {
-                    console.log("✅ Video record saved to database.");
+            await fs.promises.writeFile(savePath, videoBuffer);
+            console.log("✅ File saved to:", savePath);
+
+            // 6. DB Logging
+            const finalCost = isAdmin ? 0 : COST_PER_VIDEO;
+            const insertSql = 'INSERT INTO generated_videos (user_id, file_path, prompt, credit_cost) VALUES (?, ?, ?, ?)';
+            
+            db.query(insertSql, [userId, publicUrl, prompt, finalCost], (insErr) => {
+                if (insErr) console.error("❌ Insert error:", insErr);
+
+                // Prepare response object
+                // CHANGED: key is now 'video_path' to match frontend request
+                const responsePayload = { 
+                    status: 'success', 
+                    video_b64: finalBase64String, 
+                    video_path: publicUrl, // <--- Matching Frontend
+                    remaining_credits: isAdmin ? 'Unlimited' : (userSub.credit - COST_PER_VIDEO)
+                };
+
+                if (isAdmin) {
+                    return res.json(responsePayload);
                 }
 
-                const updateCreditSql = 'UPDATE subscriptions_combined SET credit = credit - ? WHERE subscription_id = ?';
-                db.query(updateCreditSql, [COST_PER_VIDEO, userSub.subscription_id], (updateErr) => {
-                    if (updateErr) console.error("❌ Failed to deduct credits:", updateErr);
-                    else console.log("💰 Credits deducted successfully.");
-
-                    // 7. SEND RESPONSE
-                    res.json({
-                        status: 'success',
-                        video_b64: finalBase64String, // Send base64 so frontend logic stays compatible
-                        video_url: publicUrl,
-                        remaining_credits: userSub.credit - COST_PER_VIDEO
-                    });
+                const updateSql = 'UPDATE subscriptions_combined SET credit = credit - ? WHERE subscription_id = ?';
+                db.query(updateSql, [COST_PER_VIDEO, userSub.subscription_id], () => {
+                    res.json(responsePayload);
                 });
             });
 
         } catch (error) {
-            console.error("\n❌ Generation Error:", error);
-            res.status(500).json({ error: error.message || "Failed to generate video" });
+            console.error("❌ Generation Error:", error);
+            res.status(500).json({ error: error.message });
         }
     });
 };

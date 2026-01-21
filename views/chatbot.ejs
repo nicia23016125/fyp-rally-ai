@@ -10,98 +10,36 @@
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 
     <style>
-        /* --- GLOBAL LAYOUT & BACKGROUND --- */
+        /* --- GLOBAL LAYOUT --- */
         body { 
             margin: 0; padding: 0; 
             font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; 
             height: 100vh; 
-            display: flex; 
-            flex-direction: column; /* Stack Navbar on top of Content */
-            overflow: hidden; 
-            
-            /* Parallax Background Applied to Body */
+            display: flex; flex-direction: column; overflow: hidden; 
             background: url('/images/k.jpg') no-repeat center center fixed; 
-            background-size: cover;
-            position: relative;
+            background-size: cover; position: relative;
         }
-
-        /* Dark Overlay to improve text readability */
         body::before {
-            content: "";
-            position: absolute;
-            top: 0; left: 0;
-            width: 100%; height: 100%;
-            background: rgba(0, 0, 0, 0.6); /* 60% Dark Overlay */
-            z-index: 0;
-            pointer-events: none;
+            content: ""; position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0, 0, 0, 0.6); z-index: 0; pointer-events: none;
         }
-
-        /* --- NAVBAR --- */
-        /* Ensure navbar sits above the overlay */
         nav { position: relative; z-index: 10; flex: 0 0 auto; }
         .navbar-custom { background-color: #eef6ff; padding: 15px 20px; }
         .navbar-brand { font-size: 1.5rem; font-weight: bold; color: black !important; }
         .nav-link { font-weight: bold; color: black !important; }
 
-        /* --- MAIN SPLIT LAYOUT --- */
-        .content-wrapper {
-            display: flex;
-            flex: 1 1 auto; /* Fill remaining height */
-            overflow: hidden; /* Prevent body scroll, handle inside panels */
-            position: relative;
-            z-index: 1; 
-            width: 100%;
-        }
-
-        /* --- LEFT PANEL (Gallery) --- */
-        .left-panel { 
-            flex: 1; 
-            padding: 40px; 
-            display: flex; 
-            flex-direction: column; 
-            align-items: center; 
-            justify-content: flex-start; 
-            
-            /* Transparent background so cards float on the image */
-            background: transparent; 
-            overflow-y: auto; 
-        }
-
-        /* --- RIGHT PANEL (Chatbot Section) --- */
-        .right-panel { 
-            width: 450px; /* Fixed width for chatbot */
-            height: 100%;
-            
-            /* Glassmorphism Effect: Distinct section but blends with bg */
-            background-color: rgba(255, 255, 255, 0.9); 
-            backdrop-filter: blur(10px);
-            border-left: 1px solid rgba(255, 255, 255, 0.3);
-            
-            display: flex;
-            flex-direction: column;
-            box-shadow: -5px 0 25px rgba(0,0,0,0.2); 
-        }
-
+        .content-wrapper { display: flex; flex: 1 1 auto; overflow: hidden; position: relative; z-index: 1; width: 100%; }
+        .left-panel { flex: 1; padding: 40px; display: flex; flex-direction: column; align-items: center; justify-content: flex-start; background: transparent; overflow-y: auto; }
+        .right-panel { width: 450px; height: 100%; background-color: rgba(255, 255, 255, 0.9); backdrop-filter: blur(10px); border-left: 1px solid rgba(255, 255, 255, 0.3); display: flex; flex-direction: column; box-shadow: -5px 0 25px rgba(0,0,0,0.2); }
         #botpress-webchat { width: 100%; height: 100%; border: none; }
 
-        /* --- TEXT STYLES (Updated for Dark Background) --- */
         .container-box { width: 100%; max-width: 800px; text-align: center; }
-        /* White text with shadow for visibility on bg image */
         h1 { color: #ffffff; margin: 0 0 10px 0; font-size: 2.5rem; text-shadow: 0 2px 4px rgba(0,0,0,0.5); }
         .subtitle { color: #e0e0e0; margin-bottom: 40px; font-size: 1.1rem; text-shadow: 0 1px 2px rgba(0,0,0,0.5); }
         #gallery-container { width: 100%; display: flex; flex-direction: column; gap: 30px; padding-bottom: 40px; }
 
         /* --- CARD STYLES --- */
-        .output-card { 
-            background: rgba(255, 255, 255, 0.98); /* Solid white cards */
-            border-radius: 16px; 
-            box-shadow: 0 10px 40px rgba(0,0,0,0.2); 
-            border: none; 
-            padding: 0; 
-            overflow: hidden; 
-            animation: fadeIn 0.5s ease-out; 
-            text-align: left; 
-        }
+        .output-card { background: rgba(255, 255, 255, 0.98); border-radius: 16px; box-shadow: 0 10px 40px rgba(0,0,0,0.2); border: none; padding: 0; overflow: hidden; animation: fadeIn 0.5s ease-out; text-align: left; }
         @keyframes fadeIn { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
         
         .prompt-section { padding: 20px 30px; background-color: #f8f9fa; border-bottom: 1px solid #eee; }
@@ -120,10 +58,7 @@
         .input-row:focus-within { border-color: #007bff; background-color: #f0f7ff; }
         .radio-select { cursor: pointer; transform: scale(1.2); margin-top: 12px; }
         
-        .anim-input { 
-            flex: 1; padding: 12px; border: 1px solid #ddd; border-radius: 4px; font-size: 0.95rem; font-family: inherit;
-            min-height: 120px; resize: vertical; line-height: 1.5; width: 100%; box-sizing: border-box; 
-        }
+        .anim-input { flex: 1; padding: 12px; border: 1px solid #ddd; border-radius: 4px; font-size: 0.95rem; font-family: inherit; min-height: 120px; resize: vertical; line-height: 1.5; width: 100%; box-sizing: border-box; }
         
         .btn { padding: 10px 20px; font-size: 0.9rem; cursor: pointer; border: none; border-radius: 8px; transition: background 0.2s, transform 0.1s; display: inline-flex; align-items: center; gap: 8px; font-weight: 600; text-decoration: none; }
         .btn:active { transform: scale(0.98); }
@@ -147,7 +82,6 @@
     <%- include('partials/navbar.ejs') %>
 
     <div class="content-wrapper">
-        
         <div class="left-panel">
             <div class="container-box">
                 <h1>AI Illustrator</h1>
@@ -155,16 +89,14 @@
                 <div id="gallery-container"></div>
             </div>
         </div>
-
         <div class="right-panel">
             <div id="botpress-webchat"></div>
         </div>
-
     </div>
 
     
     <script src="https://cdn.botpress.cloud/webchat/v3.5/inject.js"></script>
-    <script src="https://files.bpcontent.cloud/2026/01/13/04/20260113042549-4QD80DNT.js" defer></script>
+    <script src="https://files.bpcontent.cloud/2026/01/19/20/20260119205500-U5I2SS75.js" defer></script>
     
     <script>
         // --- CONFIGURATION ---
@@ -205,7 +137,8 @@
                 el.setAttribute('contenteditable', 'false');
                 el.style.backgroundColor = 'transparent'; el.style.border = '1px solid transparent'; el.style.padding = '0';
                 btn.innerText = '✏️ Edit';
-                const manualInput = document.getElementById(`vid-prompt-manual-${id}`);
+                // Only sync to MANUAL input on user save
+                const manualInput = document.getElementById(`input-manual-${id}`);
                 if (manualInput) manualInput.value = el.innerText;
                 document.getElementById(`btn-recreate-${id}`).style.display = 'inline-flex';
             } else {
@@ -218,7 +151,8 @@
 
         // --- RECREATE IMAGE ---
         async function recreateImage(id) {
-            const manualInput = document.getElementById(`vid-prompt-manual-${id}`);
+            // Default to manual input for recreation unless radio selected
+            const manualInput = document.getElementById(`input-manual-${id}`);
             const promptText = manualInput ? manualInput.value : document.getElementById(`prompt-${id}`).innerText;
             const recreateWrap = document.getElementById(`recreate-wrap-${id}`);
             
@@ -243,6 +177,7 @@
             const uniqueId = Math.random().toString(36).substr(2, 9);
             const labelStr = panelNumber ? `Story Panel ${panelNumber}` : "Generated Scene";
 
+            // IDs are explicitly named 'input-manual-' and 'input-bot-' to avoid confusion
             card.innerHTML = `
                 <div class="prompt-section">
                     <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
@@ -269,7 +204,7 @@
                                 <input type="radio" id="radio-manual-${uniqueId}" name="prompt-choice-${uniqueId}" value="manual" class="radio-select" checked>
                                 <div style="width:100%">
                                     <label for="radio-manual-${uniqueId}" style="font-size: 0.75rem; color:#666; display:block; margin-bottom: 4px;">Manual / Original</label>
-                                    <textarea id="vid-prompt-manual-${uniqueId}" class="anim-input">${promptText}</textarea>
+                                    <textarea id="input-manual-${uniqueId}" class="anim-input">${promptText}</textarea>
                                 </div>
                             </div>
 
@@ -277,7 +212,7 @@
                                 <input type="radio" id="radio-bot-${uniqueId}" name="prompt-choice-${uniqueId}" value="bot" class="radio-select">
                                 <div style="width:100%">
                                     <label for="radio-bot-${uniqueId}" style="font-size: 0.75rem; color:#007bff; font-weight:bold; display:block; margin-bottom: 4px;">Chat Generated</label>
-                                    <textarea id="vid-prompt-bot-${uniqueId}" class="anim-input" style="border-color: #cce5ff; background: #fdfdfe;">${promptText}</textarea>
+                                    <textarea id="input-bot-${uniqueId}" class="anim-input" style="border-color: #cce5ff; background: #fdfdfe;">${promptText}</textarea>
                                 </div>
                             </div>
                         </div>
@@ -337,8 +272,8 @@
             const vidPlayer = document.getElementById(`vid-${id}`);
 
             const manualRadio = document.getElementById(`radio-manual-${id}`);
-            const manualInput = document.getElementById(`vid-prompt-manual-${id}`);
-            const botInput = document.getElementById(`vid-prompt-bot-${id}`);
+            const manualInput = document.getElementById(`input-manual-${id}`); // Using new ID
+            const botInput = document.getElementById(`input-bot-${id}`);       // Using new ID
             
             let promptText = "";
             if (manualRadio && manualRadio.checked) {
@@ -377,7 +312,7 @@
             }
         }
 
-        // --- EVENT LISTENER (FINAL LOGIC) ---
+        // --- BOT EVENT LISTENER (UPDATES ONLY 'input-bot-') ---
         function handleBotEvent(event) {
             console.log("🔔 RAW EVENT:", event);
             const type = (event.payload && event.payload.type) ? event.payload.type : event.type;
@@ -410,28 +345,42 @@
                             const promptEl = targetCard.querySelector('.prompt-text');
                             if (promptEl) {
                                 const uniqueId = promptEl.id.replace('prompt-', '');
-                                const botInput = document.getElementById(`vid-prompt-bot-${uniqueId}`);
+                                
+                                // --- CRITICAL UPDATE: TARGET ONLY BOT INPUT ---
+                                const botInput = document.getElementById(`input-bot-${uniqueId}`);
                                 const botRadio = document.getElementById(`radio-bot-${uniqueId}`);
+                                
                                 if (botInput) {
                                     botInput.value = cleanPrompt;
                                     if (botRadio) botRadio.checked = true;
+                                    
+                                    // Blue flash effect
+                                    botInput.style.backgroundColor = "#e8f0fe";
+                                    setTimeout(() => botInput.style.backgroundColor = "#fdfdfe", 600);
                                 }
                             }
                         }
                     });
-                    showToast(`🎬 Updated video prompts for all panels!`);
+                    showToast(`🎬 Updated Chat Generated prompts only!`);
                 } else {
                     if (cards.length > 0) {
                         const lastCard = cards[cards.length - 1];
                         const promptEl = lastCard.querySelector('.prompt-text');
                         if (promptEl) {
                             const uniqueId = promptEl.id.replace('prompt-', '');
-                            const botInput = document.getElementById(`vid-prompt-bot-${uniqueId}`);
+                            
+                            // --- CRITICAL UPDATE: TARGET ONLY BOT INPUT ---
+                            const botInput = document.getElementById(`input-bot-${uniqueId}`);
                             const botRadio = document.getElementById(`radio-bot-${uniqueId}`);
+                            
                             if (botInput) {
                                 botInput.value = text;
                                 if (botRadio) botRadio.checked = true;
-                                showToast(`🎬 Bot suggestion applied!`);
+                                
+                                // Blue flash effect
+                                botInput.style.backgroundColor = "#e8f0fe";
+                                setTimeout(() => botInput.style.backgroundColor = "#fdfdfe", 600);
+                                showToast(`🎬 Updated Chat Generated prompt!`);
                             }
                         }
                     }
@@ -439,7 +388,7 @@
             }
         }
 
-        // --- ROBUST INITIALIZATION ---
+        // --- INITIALIZATION ---
         function setupBotListeners() {
             const intervalId = setInterval(() => {
                 if (window.botpress && window.botpress.on) {

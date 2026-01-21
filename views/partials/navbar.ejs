@@ -38,6 +38,7 @@
               <li><a class="dropdown-item" href="/viewMyself">My Profile</a></li>
               <% if (session.user && session.user.userRole === 'admin') { %>
                 <li><a class="dropdown-item" href="/dashboard">Dashboard</a></li>
+                <li><a class="dropdown-item" href="/admin/analytics">Analytics</a></li>
                 <li><a class="dropdown-item" href="/admin/content">Content Items</a></li>
                 <li><hr class="dropdown-divider"></li>
               <% } %>

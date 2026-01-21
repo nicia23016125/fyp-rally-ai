@@ -104,24 +104,29 @@ exports.registerForm = (req, res) => {
     res.render('register', { messages: req.flash('error'), formData: req.flash('formData')[0] });
 };
 
+// At the top of your controller file, ensure fetch is available
+// Node.js 18+ has fetch built-in. For older versions, use: const fetch = require('node-fetch');
+
 exports.register = (req, res) => {
     const { userName, userEmail, userPassword, userRole } = req.body;
     let userImage = req.file ? req.file.filename : 'default.png'; // Default image if none uploaded
 
-    // Ensure required fields are provided
+    // 1. Ensure all required fields are provided
     if (!userName || !userEmail || !userPassword || !userRole) {
         req.flash('error', 'All fields are required.');
         return res.redirect('/register');
     }
 
+    // 2. Prepare the SQL statement using SHA1 for password hashing as per your login logic
     const sql = `INSERT INTO users (username, userEmail, userPassword, userImage, userRole) 
                  VALUES (?, ?, SHA1(?), ?, ?)`;
 
+    // 3. Execute the database query
     db.query(sql, [userName, userEmail, userPassword, userImage, userRole], (err, result) => {
         if (err) {
             console.error("Error registering user:", err);
 
-            // Check for duplicate email error
+            // Check for duplicate email error specifically
             if (err.code === 'ER_DUP_ENTRY') {
                 req.flash('error', 'This email is already registered.');
                 return res.redirect('/register');
@@ -130,10 +135,39 @@ exports.register = (req, res) => {
             return res.status(500).send("Database error: Unable to register user.");
         }
 
+        // --- 4. START n8n WEBHOOK INTEGRATION ---
+        // We trigger the welcome automation only after the database confirms success
+        fetch('https://n8ngc.codeblazar.org/webhook/7ad08359-fbdb-4647-944c-e580b21b1e08', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                name: userName,
+                email: userEmail,
+                role: userRole,
+                event: 'user_registration',
+                timestamp: new Date().toISOString()
+            }),
+        })
+        .then(response => {
+            // Log success for your internal debugging
+            if (response.ok) {
+                console.log(`n8n Automation triggered successfully for: ${userEmail}`);
+            }
+        })
+        .catch(error => {
+            // Log errors if the n8n server is unreachable
+            console.error('n8n Webhook Error:', error);
+        });
+        // --- END n8n WEBHOOK INTEGRATION ---
+
+        // 5. Finalize the response to the user
         req.flash('success', 'Registration successful! Please log in.');
         res.redirect('/login');
     });
 };
+
 
 exports.editUserForm = (req, res) => {
     const userId = req.params.id;
@@ -220,6 +254,7 @@ exports.deleteUser = (req, res) => {
 
 // ✅ Fetch the logged-in user's profile AND their active subscription
 // ✅ Fetch the logged-in user's profile, active subscription, AND generated videos
+
 exports.getMyself = (req, res) => {
     const userId = req.session.user.userId;
 
@@ -253,10 +288,12 @@ exports.getMyself = (req, res) => {
                     }
 
                     // Render with user, subscription, and video data
+                    // In controllers/userController.js (Ensure this specific part is there)
                     res.render('viewMyself', { 
                         userProfile: userResults[0], 
                         subscription: subResults.length > 0 ? subResults[0] : null,
-                        videos: vidResults // Pass videos array to EJS
+                        videos: vidResults,
+                        tokens: req.session.tokens || null // <--- IF THIS IS MISSING, THE BUTTON WON'T WORK
                     });
                 });
             });
@@ -266,6 +303,8 @@ exports.getMyself = (req, res) => {
         }
     });
 };
+
+
 // ✅ Edit Profile Form for Logged-in User
 exports.editMyselfForm = (req, res) => {
     if (!req.session.user) {

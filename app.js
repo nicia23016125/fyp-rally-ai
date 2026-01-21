@@ -30,10 +30,13 @@ const subscriptionController = require('./controllers/subscriptionController');
 const dashboardController = require('./controllers/dashboardController');
 const contentController = require('./controllers/contentController');
 const reviewController = require('./controllers/reviewController');
-
+const authController = require('./controllers/authController');
+const driveController = require('./controllers/driveController');
+const videoController = require('./controllers/aiController');
+const analyticsController = require('./controllers/analyticsController');
 // AI Video Controller
 // Note: Ensure your file is named 'aicontroller.js' inside the controllers folder
-const videoController = require('./controllers/aicontroller'); 
+const editingController = require('./controllers/editingcontroller'); 
 
 // Import middleware
 const { checkAuthenticated, checkAdmin, checkUser } = require('./middleware/auth');
@@ -50,8 +53,6 @@ app.use(bodyParser.json());
 // 2. Static File Serving
 app.use(express.static('public')); // Main public folder
 app.use('/static', express.static(path.join(__dirname, 'static'))); // AI static assets
-app.use('/videosforindex', express.static(path.join(__dirname, 'videosforindex'))); // Jerald's videos
-
 // 3. View Engine Setup
 app.set('view engine', 'ejs');
 
@@ -151,6 +152,14 @@ app.get('/', (req, res) => {
 
 // ✅ AI Video Animation Route
 app.post('/animate', videoController.animateImage);
+//saving to google drive button
+app.get('/auth/google', authController.googleLogin);
+app.get('/auth/callback', authController.googleCallback);
+app.post('/drive/upload', driveController.uploadToFile);
+
+app.use('/videosforindex', express.static(path.join(__dirname, 'videosforindex'))); // Jerald's videos
+app.get('/tiktok', checkAuthenticated, editingController.posting);
+app.post('/api/get-ai-advice', editingController.getAiPromptAdvice);
 
 // ✅ User Routes (Login, Register, Logout)
 app.get('/login', userController.loginForm);
@@ -241,8 +250,105 @@ app.get('/chat', checkAuthenticated, (req, res) => {
 app.get("/generateNETSQR", checkAuthenticated, netsQrController.generateQrCode);
 app.post("/generateNETSQR", checkAuthenticated, netsQrController.generateQrCode);
 
+
+
+
+
+
+
+
+
+
+
+// --- NEW ANALYTICS API ROUTE ---
+// This route handles the actual page load
+// Change from '/analytics' to '/admin/analytics' to match your navbar
+app.get('/admin/analytics', checkAdmin, async (req, res) => {
+    try {
+        // 1. Fetch Global Totals
+        const [totalStats] = await db.promise().query(`
+            SELECT 
+                (SELECT COUNT(*) FROM users) as newUsers,
+                (SELECT COUNT(*) FROM subscriptions_combined WHERE status = 'active') as newSubs,
+                (SELECT IFNULL(SUM(amount), 0) FROM revenue) as earnings,
+                (SELECT COUNT(*) FROM reviews) as totalReviews
+        `);
+
+        // 2. Monthly Revenue Trend (Fixes the ONLY_FULL_GROUP_BY error)
+        const [revenueTrend] = await db.promise().query(`
+            SELECT 
+                DATE_FORMAT(createdAt, '%Y-%m') as label, 
+                SUM(amount) as value
+            FROM revenue 
+            GROUP BY DATE_FORMAT(createdAt, '%Y-%m')
+            ORDER BY label ASC
+        `);
+
+        const initialData = { 
+            newUsers: totalStats[0].newUsers || 0, 
+            newSubs: totalStats[0].newSubs || 0, 
+            earnings: totalStats[0].earnings || 0, 
+            renewals: 0, 
+            totalReviews: totalStats[0].totalReviews || 0,
+            charts: {
+                users: [{ label: 'Total Users', value: totalStats[0].newUsers }],
+                revenue: revenueTrend.length > 0 ? revenueTrend : [{ label: 'No Data', value: 0 }],
+                reviews: [{ label: 'Total Reviews', value: totalStats[0].totalReviews }]
+            }
+        };
+
+        res.render('analytics', { initialData, session: req.session });
+    } catch (err) {
+        console.error("Analytics Error:", err);
+        res.status(500).send("Internal Server Error");
+    }
+});
+
+app.get('/api/admin/stats', checkAdmin, async (req, res) => {
+    const { startDate, endDate } = req.query;
+    try {
+        // 1. Summary Stats for the filtered period
+        const [summary] = await db.promise().query(`
+            SELECT 
+                (SELECT COUNT(*) FROM users WHERE createdAt BETWEEN ? AND ?) as newUsers,
+                (SELECT COUNT(*) FROM subscriptions_combined WHERE status = 'active' AND start_date BETWEEN ? AND ?) as newSubs,
+                (SELECT IFNULL(SUM(amount), 0) FROM revenue WHERE createdAt BETWEEN ? AND ?) as earnings,
+                (SELECT COUNT(*) FROM reviews) as totalReviews
+        `, [startDate, endDate, startDate, endDate, startDate, endDate]);
+
+        // 2. Filtered Revenue Trend (Grouped by Date for the chart)
+        const [revenueTrend] = await db.promise().query(`
+            SELECT 
+                DATE_FORMAT(createdAt, '%Y-%m-%d') as label, 
+                SUM(amount) as value
+            FROM revenue 
+            WHERE createdAt BETWEEN ? AND ?
+            GROUP BY DATE_FORMAT(createdAt, '%Y-%m-%d')
+            ORDER BY label ASC
+        `, [startDate, endDate]);
+
+        res.json({
+            summary: summary[0],
+            charts: {
+                users: [{ label: 'Filtered Users', value: summary[0].newUsers }],
+                revenue: revenueTrend.length > 0 ? revenueTrend : [{ label: 'No Data', value: 0 }],
+                reviews: [{ label: 'Total Reviews', value: summary[0].totalReviews }]
+            }
+        });
+    } catch (err) {
+        console.error("API Error:", err);
+        res.status(500).json({ error: "Internal Server Error" });
+    }
+});
+
+
+
+
+
 // ✅ Start Express Server
 const PORT = process.env.PORT || 3006;
 app.listen(PORT, () => {
     console.log(`✅ Server running at http://localhost:${PORT}`);
 });
+
+

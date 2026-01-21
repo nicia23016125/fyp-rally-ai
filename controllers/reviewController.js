@@ -9,8 +9,8 @@ exports.addReview = (req, res) => {
 
     const { content_id, rating, comment } = req.body;
     const userId = req.session.user.userId;
+    const userName = req.session.user.username; // Assuming username is in session
 
-    // SCHEMA MATCH: Uses 'rating'
     const sql = 'INSERT INTO reviews (reviewedByUserId, contentId, rating, comment) VALUES (?, ?, ?, ?)';
     
     db.query(sql, [userId, content_id, rating, comment], (err, result) => {
@@ -18,6 +18,27 @@ exports.addReview = (req, res) => {
             console.error('Error adding review:', err);
             return res.status(500).send('Database error: ' + err.message);
         }
+
+        // --- n8n Alert Logic ---
+        // Trigger only for low ratings (1 or 2 stars)
+        if (parseInt(rating) < 3) {
+            fetch('https://n8ngc.codeblazar.org/webhook/0c895076-989e-46b6-af32-e9ecf663d52f', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    type: 'LOW_RATING_ALERT',
+                    user: userName,
+                    rating: rating,
+                    comment: comment,
+                    contentId: content_id,
+                    timestamp: new Date().toISOString()
+                })
+            })
+            .then(() => console.log('Low rating alert sent to n8n.'))
+            .catch(err => console.error('Failed to trigger n8n alert:', err));
+        }
+        // -----------------------
+
         req.flash('success', 'Review added successfully!');
         res.redirect('back');
     });
