@@ -254,7 +254,7 @@ exports.deleteUser = (req, res) => {
 
 // ✅ Fetch the logged-in user's profile AND their active subscription
 // ✅ Fetch the logged-in user's profile, active subscription, AND generated videos
-
+// ✅ Fetch the logged-in user's profile, subscription, videos AND IMAGES
 exports.getMyself = (req, res) => {
     const userId = req.session.user.userId;
 
@@ -274,7 +274,6 @@ exports.getMyself = (req, res) => {
             db.query(subSql, [userId], (subError, subResults) => {
                 if (subError) {
                     console.error('Subscription query error:', subError);
-                    // Continue even if subscription fails, just pass null
                     subResults = []; 
                 }
 
@@ -284,16 +283,26 @@ exports.getMyself = (req, res) => {
                 db.query(vidSql, [userId], (vidError, vidResults) => {
                     if (vidError) {
                         console.error('Video query error:', vidError);
-                        vidResults = []; // Fail gracefully, just show empty list
+                        vidResults = [];
                     }
 
-                    // Render with user, subscription, and video data
-                    // In controllers/userController.js (Ensure this specific part is there)
-                    res.render('viewMyself', { 
-                        userProfile: userResults[0], 
-                        subscription: subResults.length > 0 ? subResults[0] : null,
-                        videos: vidResults,
-                        tokens: req.session.tokens || null // <--- IF THIS IS MISSING, THE BUTTON WON'T WORK
+                    // ✅ NEW Query 4: Get Generated Images (from generation_history)
+                    const imgSql = 'SELECT * FROM generation_history WHERE user_id = ? ORDER BY created_at DESC';
+
+                    db.query(imgSql, [userId], (imgError, imgResults) => {
+                        if (imgError) {
+                            console.error('Image query error:', imgError);
+                            imgResults = []; // Fail gracefully
+                        }
+
+                        // Render with ALL data (User, Sub, Videos, Images)
+                        res.render('viewMyself', { 
+                            userProfile: userResults[0], 
+                            subscription: subResults.length > 0 ? subResults[0] : null,
+                            videos: vidResults,
+                            images: imgResults, // <--- Passing images to the view
+                            tokens: req.session.tokens || null 
+                        });
                     });
                 });
             });
@@ -303,7 +312,6 @@ exports.getMyself = (req, res) => {
         }
     });
 };
-
 
 // ✅ Edit Profile Form for Logged-in User
 exports.editMyselfForm = (req, res) => {

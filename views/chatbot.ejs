@@ -115,16 +115,67 @@
         }
 
         // --- IMAGE API ---
+        // --- NEW: NANO BANANA GENERATION (Server-Side) ---
         async function generateImageBlob(prompt) {
-            let cleanApiPrompt = prompt.replace(/--[a-z]+\s+[0-9:.]+/gi, '').trim();
-            const encodedPrompt = encodeURIComponent(cleanApiPrompt);
-            const seed = Math.floor(Math.random() * 10000000);
-            const url = `https://gen.pollinations.ai/image/${encodedPrompt}?width=1024&height=768&nologo=true&seed=${seed}&model=flux`;
-            
-            const response = await fetch(url, { method: 'GET', headers: { 'Authorization': `Bearer ${API_KEY}`, 'Accept': '*/*' } });
-            if (!response.ok) throw new Error(`API Error ${response.status}`);
-            const blob = await response.blob();
-            return URL.createObjectURL(blob);
+            console.log("🎨 Sending Prompt to Backend for Nano Banana Generation...");
+
+            try {
+                const response = await fetch('/api/generate-nano', {
+                    method: 'POST',
+                    headers: { 
+                        'Content-Type': 'application/json',
+                        'Accept': 'application/json'
+                    },
+                    body: JSON.stringify({ prompt: prompt })
+                });
+
+                // --- DEBUGGING BLOCK START ---
+                // If the content type is not JSON, it's likely an HTML error page
+                const contentType = response.headers.get("content-type");
+                if (contentType && contentType.includes("text/html")) {
+                    const htmlText = await response.text();
+                    console.error("❌ SERVER RETURNED HTML INSTEAD OF JSON:", htmlText);
+                    
+                    // Check for common issues in the HTML text
+                    if (htmlText.includes("Login") || htmlText.includes("Sign In")) {
+                        alert("Your session has expired. Please refresh the page and log in again.");
+                    } else if (htmlText.includes("Cannot POST")) {
+                        alert("Critical Error: The route '/api/generate-nano' does not exist in app.js");
+                    }
+                    
+                    throw new Error("Server returned HTML (Check Console for details)");
+                }
+                // --- DEBUGGING BLOCK END ---
+
+                if (!response.ok) {
+                    const errorData = await response.json();
+                    throw new Error(errorData.error || `Server Error ${response.status}`);
+                }
+
+                const data = await response.json();
+
+                if (data.status === 'success' && (data.image_base64 || (data.modelOutputs && data.modelOutputs[0].image_base64))) {
+                    const base64Str = data.image_base64 || data.modelOutputs[0].image_base64;
+                    const byteCharacters = atob(base64Str);
+                    const byteNumbers = new Array(byteCharacters.length);
+                    for (let i = 0; i < byteCharacters.length; i++) {
+                        byteNumbers[i] = byteCharacters.charCodeAt(i);
+                    }
+                    const byteArray = new Uint8Array(byteNumbers);
+                    const blob = new Blob([byteArray], { type: "image/png" });
+                    
+                    if (data.remaining_credits !== undefined) {
+                        showToast(`Image Generated! Credits left: ${data.remaining_credits}`);
+                    }
+                    return URL.createObjectURL(blob);
+                } else {
+                    throw new Error("Server returned success but no image data.");
+                }
+
+            } catch (error) {
+                console.error("Generation Error:", error);
+                throw error;
+            }
         }
 
         // --- TOGGLE EDIT ---

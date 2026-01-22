@@ -15,7 +15,7 @@
       color: white;
     }
 
-    /* Main Container (Profile + Subscription) */
+    /* Main Container */
     .profile-container {
       max-width: 600px;
       background-color: rgba(255, 255, 255, 0.95);
@@ -54,7 +54,7 @@
         border-left: 5px solid #0d6efd;
     }
 
-    /* --- VIDEO GALLERY STYLES --- */
+    /* --- GALLERY STYLES --- */
     .video-gallery-container {
       max-width: 1000px;
       margin-top: 30px;
@@ -65,19 +65,36 @@
       box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.2);
     }
     
-    .video-card {
+    .media-card {
         border-radius: 10px;
         overflow: hidden;
         border: 1px solid #ddd;
         transition: transform 0.2s;
         background: #fff;
     }
-    .video-card:hover { transform: translateY(-5px); box-shadow: 0 5px 15px rgba(0,0,0,0.1); }
+    .media-card:hover { transform: translateY(-5px); box-shadow: 0 5px 15px rgba(0,0,0,0.1); }
+    
     .video-wrapper video { width: 100%; height: 200px; object-fit: cover; background: #000; }
-    .video-meta { padding: 15px; }
-    .video-prompt { font-size: 0.9rem; color: #555; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; height: 2.7em; }
-    .video-date { font-size: 0.75rem; color: #999; margin-top: 5px; display: block; }
+    
+    .image-wrapper { 
+        height: 200px; 
+        overflow: hidden; 
+        background: #f0f0f0;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+    .image-wrapper img { 
+        width: 100%; 
+        height: 100%; 
+        object-fit: cover; 
+    }
+
+    .media-meta { padding: 15px; }
+    .media-prompt { font-size: 0.9rem; color: #555; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; height: 2.7em; }
+    .media-date { font-size: 0.75rem; color: #999; margin-top: 5px; display: block; }
     .download-link { font-size: 0.85rem; text-decoration: none; color: #0d6efd; font-weight: bold; }
+
   </style>
 </head>
 <body>
@@ -138,17 +155,17 @@
             <div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-4">
                 <% videos.forEach(video => { %>
                     <div class="col">
-                        <div class="video-card">
+                        <div class="media-card">
                             <div class="video-wrapper">
                                 <video controls preload="metadata">
                                     <source src="<%= video.file_path %>" type="video/mp4">
                                     Your browser does not support the video tag.
                                 </video>
                             </div>
-                            <div class="video-meta text-start">
-                                <p class="video-prompt" title="<%= video.prompt %>">"<%= video.prompt %>"</p>
+                            <div class="media-meta text-start">
+                                <p class="media-prompt" title="<%= video.prompt %>">"<%= video.prompt %>"</p>
                                 <div class="d-flex justify-content-between align-items-center mt-2">
-                                    <span class="video-date"><i class="far fa-calendar-alt me-1"></i><%= new Date(video.created_at).toLocaleDateString() %></span>
+                                    <span class="media-date"><i class="far fa-calendar-alt me-1"></i><%= new Date(video.created_at).toLocaleDateString() %></span>
                                     
                                     <div class="d-flex align-items-center">
                                         <a href="<%= video.file_path %>" download class="download-link me-3">
@@ -156,7 +173,7 @@
                                         </a>
 
                                         <a href="javascript:void(0)" 
-                                           onclick="handleSaveToDrive('<%= video.file_path %>', '<%= video.video_id %>', this)" 
+                                           onclick="handleSaveToDrive('<%= video.file_path %>', '<%= video.video_id %>', 'video', this)" 
                                            class="text-success text-decoration-none fw-bold" 
                                            style="font-size: 0.85rem; cursor: pointer;">
                                             <i class="fab fa-google-drive me-1"></i> Drive
@@ -172,7 +189,65 @@
             <div class="text-center py-5">
                 <i class="fas fa-video-slash fa-3x text-muted mb-3"></i>
                 <p class="text-muted">You haven't generated any videos yet.</p>
-                <a href="/?openBot=1" class="btn btn-primary">Start Creating</a>
+                <a href="/?openBot=1" class="btn btn-primary">Start Creating Videos</a>
+            </div>
+        <% } %>
+    </div>
+
+    <div class="video-gallery-container w-100 mt-4">
+        <h4 class="mb-4 text-start"><i class="fas fa-images text-success me-2"></i>My Generated Images</h4>
+        
+        <% if (images && images.length > 0) { %>
+            <div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-4">
+                <% images.forEach(img => { %>
+                    <div class="col">
+                        <div class="media-card">
+                            <div class="image-wrapper">
+                                <% 
+                                    let imgSrc = "";
+                                    let isBase64 = false;
+                                    // Check if it's a URL or Base64 Data
+                                    if (img.image_base64 && img.image_base64.startsWith('http')) {
+                                        imgSrc = img.image_base64; 
+                                    } else {
+                                        imgSrc = "data:image/png;base64," + img.image_base64;
+                                        isBase64 = true;
+                                    }
+                                %>
+                                <img src="<%= imgSrc %>" alt="Generated AI Image">
+                            </div>
+                            <div class="media-meta text-start">
+                                <p class="media-prompt" title="<%= img.prompt %>">"<%= img.prompt %>"</p>
+                                <div class="d-flex justify-content-between align-items-center mt-2">
+                                    <span class="media-date"><i class="far fa-clock me-1"></i><%= new Date(img.created_at).toLocaleDateString() %></span>
+                                    
+                                    <div class="d-flex align-items-center">
+                                        
+                                        <% if (isBase64) { %>
+                                            <a href="javascript:void(0)" 
+                                               onclick="downloadBase64('<%= imgSrc %>', 'RallyAI_Image_<%= img.id %>.png')" 
+                                               class="download-link me-3">
+                                                <i class="fas fa-download me-1"></i> Save
+                                            </a>
+                                        <% } else { %>
+                                            <a href="<%= imgSrc %>" download="RallyAI_Image.png" class="download-link me-3">
+                                                <i class="fas fa-download me-1"></i> Save
+                                            </a>
+                                        <% } %>
+
+                                        
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                <% }) %>
+            </div>
+        <% } else { %>
+            <div class="text-center py-5">
+                <i class="fas fa-image fa-3x text-muted mb-3"></i>
+                <p class="text-muted">You haven't generated any images yet.</p>
+                <a href="/?openBot=1" class="btn btn-success">Create Storyboard</a>
             </div>
         <% } %>
     </div>
@@ -180,13 +255,35 @@
   </div>
 
   <script>
-    async function handleSaveToDrive(fileUrl, videoId, btnElement) {
-        // 1. Check if Google Tokens exist in session (safely checking undefined)
+    // ✅ HELPER: SAFE BASE64 DOWNLOAD (Prevents 'about:blank#blocked')
+    function downloadBase64(dataUrl, fileName) {
+        fetch(dataUrl)
+            .then(res => res.blob())
+            .then(blob => {
+                const url = window.URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.style.display = 'none';
+                a.href = url;
+                a.download = fileName;
+                document.body.appendChild(a);
+                a.click();
+                window.URL.revokeObjectURL(url);
+                document.body.removeChild(a);
+            })
+            .catch(err => {
+                console.error("Download failed:", err);
+                alert("Could not download image. Try right-clicking and 'Save Image As'.");
+            });
+    }
+
+    // ✅ GOOGLE DRIVE UPLOAD LOGIC
+    async function handleSaveToDrive(fileUrl, uniqueId, type, btnElement) {
+        
+        // 1. Check if Google Tokens exist
         const isGoogleLoggedIn = <%= (typeof tokens !== 'undefined' && tokens) ? 'true' : 'false' %>; 
 
         if (!isGoogleLoggedIn) {
             console.log("Not connected to Google. Redirecting to Auth...");
-            // Encode state so backend knows to return to /viewMyself
             const state = encodeURIComponent(JSON.stringify({ 
                 action: 'save_to_drive', 
                 fileUrl: fileUrl,
@@ -196,10 +293,18 @@
             return;
         }
 
-        // 2. UI Feedback (Spinner)
+        // 2. Determine Filename
+        let fileName = "";
+        if (type === 'video') {
+            fileName = `RallyAI_Video_${uniqueId}.mp4`;
+        } else {
+            fileName = `RallyAI_Image_${uniqueId}.png`;
+        }
+
+        // 3. UI Feedback
         const originalContent = btnElement.innerHTML;
         btnElement.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Uploading...';
-        btnElement.style.pointerEvents = 'none'; // Prevent double-click
+        btnElement.style.pointerEvents = 'none';
         
         try {
             const response = await fetch('/drive/upload', {
@@ -207,7 +312,7 @@
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ 
                     fileUrl: fileUrl, 
-                    fileName: `RallyAI_Video_${videoId}.mp4` 
+                    fileName: fileName 
                 })
             });
             
@@ -215,7 +320,6 @@
             
             if (result.success) {
                 alert("✅ Saved to Google Drive!");
-                // Optional: Change button permanently to indicate success
                 btnElement.innerHTML = '<i class="fas fa-check"></i> Saved';
             } else {
                 throw new Error(result.error || "Unknown Error");
@@ -223,30 +327,27 @@
         } catch (err) {
             console.error(err);
             alert("❌ Upload Failed: " + err.message);
-            btnElement.innerHTML = originalContent; // Revert text on error
+            btnElement.innerHTML = originalContent; 
         } finally {
-            btnElement.style.pointerEvents = 'auto'; // Re-enable clicks
+            btnElement.style.pointerEvents = 'auto'; 
         }
     }
 
-    // Auto-save logic if returning from Google Auth redirect
+    // Auto-save logic
     window.addEventListener('load', () => {
         const urlParams = new URLSearchParams(window.location.search);
         if (urlParams.get('autosave') === 'true') {
             const fileUrl = urlParams.get('fileUrl');
-            
-            // Remove parameters from URL to prevent re-upload loop
             window.history.replaceState({}, document.title, window.location.pathname);
-            
             alert("🔄 Completing your Save to Drive...");
             
-            // Trigger upload (we don't have the button element, so no spinner)
+            // Auto-save handles videos by default
             fetch('/drive/upload', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ 
                     fileUrl: fileUrl, 
-                    fileName: `RallyAI_Video_AutoSaved.mp4` 
+                    fileName: `RallyAI_AutoSaved.mp4` 
                 })
             })
             .then(res => res.json())

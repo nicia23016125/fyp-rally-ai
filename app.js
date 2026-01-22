@@ -34,6 +34,7 @@ const authController = require('./controllers/authController');
 const driveController = require('./controllers/driveController');
 const videoController = require('./controllers/aiController');
 const analyticsController = require('./controllers/analyticsController');
+const chatController = require('./controllers/chatController');
 // AI Video Controller
 // Note: Ensure your file is named 'aicontroller.js' inside the controllers folder
 const editingController = require('./controllers/editingcontroller'); 
@@ -242,10 +243,8 @@ app.get('/401', (req, res) => {
 
 // ✅ Chat route - redirect logged-in users to Botpress chatbot
 // ✅ Chat route - Renders the internal chatbot page
-app.get('/chat', checkAuthenticated, (req, res) => {
-    res.render('chatbot', { session: req.session });
-});
-
+app.get('/chat', checkAuthenticated, chatController.getChatbot);
+app.post('/api/generate-nano', checkAuthenticated, videoController.generateNanoImage);
 // ✅ Generate NETS QR Payment Route
 app.get("/generateNETSQR", checkAuthenticated, netsQrController.generateQrCode);
 app.post("/generateNETSQR", checkAuthenticated, netsQrController.generateQrCode);
