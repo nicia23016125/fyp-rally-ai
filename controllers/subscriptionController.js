@@ -64,18 +64,6 @@ exports.getSubscriptions = (req, res) => {
 /**
  * POST /subscribe
  * Handles the "Confirm Purchase" button.
- * Logic: Maps the planId to actual data and inserts into 'subscriptions_combined'.
-
-
-/**
- * GET /subscription/:id
- * Displays the specific details for a single subscription.
- */
-// ... existing imports and PLAN_CONFIG ...
-// ... existing code ...
-
-/**
- * POST /subscribe
  * Logic: 
  * 1. If User has NO active subscription -> Create new one starting today.
  * 2. If User HAS active subscription -> Extend the End Date & Add Credits.

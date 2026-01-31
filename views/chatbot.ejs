@@ -84,7 +84,13 @@
     <div class="content-wrapper">
         <div class="left-panel">
             <div class="container-box">
-                <h1>AI Illustrator</h1>
+                <div style="display: flex; align-items: center; justify-content: center; gap: 20px; margin-bottom: 10px;">
+                    <h1 style="margin: 0;">AI Illustrator</h1>
+                    <a href="/edit-library" class="btn btn-primary" style="border-radius: 50px; font-weight: bold; padding: 10px 24px; box-shadow: 0 4px 15px rgba(0,0,0,0.3); text-decoration: none;">
+                        <i class="fas fa-layer-group me-2"></i>Edit Library
+                    </a>
+                </div>
+                
                 <p class="subtitle">Chat with the bot to describe and generate a scene.</p>
                 <div id="gallery-container"></div>
             </div>
@@ -202,24 +208,35 @@
 
         // --- RECREATE IMAGE ---
         async function recreateImage(id) {
-            // Default to manual input for recreation unless radio selected
-            const manualInput = document.getElementById(`input-manual-${id}`);
-            const promptText = manualInput ? manualInput.value : document.getElementById(`prompt-${id}`).innerText;
-            const recreateWrap = document.getElementById(`recreate-wrap-${id}`);
-            
-            recreateWrap.innerHTML = '<div class="loader"></div>';
-            recreateWrap.style.display = 'flex';
+    const manualInput = document.getElementById(`input-manual-${id}`);
+    const promptText = manualInput ? manualInput.value : document.getElementById(`prompt-${id}`).innerText;
+    const recreateWrap = document.getElementById(`recreate-wrap-${id}`);
+    const mainImg = document.getElementById(`img-${id}`); // Target the main image
 
-            try {
-                const objectUrl = await generateImageBlob(promptText);
-                const newImg = document.createElement('img');
-                newImg.className = 'generated-image'; newImg.style.display = 'block'; newImg.crossOrigin = 'anonymous'; newImg.src = objectUrl;
-                recreateWrap.innerHTML = ''; recreateWrap.appendChild(newImg);
-            } catch (error) {
-                recreateWrap.innerHTML = '<p class="status-text" style="color:red">Failed</p>';
-            }
+    recreateWrap.innerHTML = '<div class="loader"></div>';
+    recreateWrap.style.display = 'flex';
+
+    try {
+        const objectUrl = await generateImageBlob(promptText);
+        
+        // Update the main image so 'requestVideoGeneration' sees it!
+        if (mainImg) {
+            mainImg.src = objectUrl;
+            mainImg.style.display = 'block';
         }
 
+        const newImg = document.createElement('img');
+        newImg.className = 'generated-image'; 
+        newImg.style.display = 'block'; 
+        newImg.crossOrigin = 'anonymous'; 
+        newImg.src = objectUrl;
+        
+        recreateWrap.innerHTML = ''; 
+        recreateWrap.appendChild(newImg);
+    } catch (error) {
+        recreateWrap.innerHTML = '<p class="status-text" style="color:red">Failed</p>';
+    }
+}
         // --- CREATE CARD ---
         function createAndGenerateCard(promptText, panelNumber = null) {
             const container = document.getElementById('gallery-container');

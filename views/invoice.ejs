@@ -93,30 +93,31 @@
           <th>SubTotal</th>
         </tr>
       </thead>
-      <tbody>
-        <% for(let i=0; i < cart_items.length; i++) { %>
-          <tr>
-            <td>
-              <%= cart_items[i].eventName %> <br>
-              <img src="/images/<%= cart_items[i].eventImage %>" width="80px" height="80px">
-            </td>
-            <td>$<%= cart_items[i].ticketPrice %></td>
-            <td><%= cart_items[i].cartTicketQuantity %></td>
-            <td>$<%= (cart_items[i].ticketPrice * cart_items[i].cartTicketQuantity).toFixed(2) %></td>
-          </tr>
-        <% } %>
-      </tbody>
+     <tbody>
+  <tr>
+    <td>
+      <%= invoice.planName %> <br>
+      <small class="text-muted"><%= invoice.months %> month(s)</small>
+    </td>
+    <td>$<%= invoice.unitPrice %></td>
+    <td>1</td>
+    <td>$<%= invoice.subtotal %></td>
+  </tr>
+</tbody>
+
     </table>
 
     <div class="text-end fw-bold mt-3">
-      <h4>Total: $<%= Number(totalAmount).toFixed(2) %></h4>
+     <h4>Total: $<%= invoice.total %></h4>
+
     </div>
 
     <div class="payment-buttons">
       <form action="/generateNETSQR" method="POST">
-        <input type="hidden" name="cartTotal" value="<%= totalAmount %>">
-        <button type="submit" class="btn-netsqr">Pay with NETS</button>
-      </form>
+    <input type="hidden" name="amount" value="<%= invoice.total %>">
+    <button type="submit" class="btn-netsqr">Pay with NETS</button>
+</form>
+
       <div id="paypal-button-container"></div>
     </div>
   </div>

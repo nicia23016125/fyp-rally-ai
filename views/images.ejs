@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>My Generated Images - Rally AI</title>
+    
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+
+    <style>
+        body {
+            background-color: #f8fafc;
+        }
+
+        .media-card {
+            background: #fff;
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+            transition: transform 0.3s ease;
+            height: 100%;
+            border: 1px solid #e2e8f0;
+        }
+
+        .media-card:hover { 
+            transform: translateY(-5px); 
+            box-shadow: 0 8px 25px rgba(0,0,0,0.15);
+        }
+
+        .image-wrapper img {
+            width: 100%;
+            height: 250px;
+            object-fit: cover;
+            border-bottom: 1px solid #edf2f7;
+        }
+
+        .media-meta { 
+            padding: 15px; 
+        }
+
+        .media-prompt {
+            font-size: 0.9rem;
+            color: #4a5568;
+            font-style: italic;
+            display: -webkit-box;
+            -webkit-line-clamp: 2;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+            height: 2.7rem;
+            margin-bottom: 10px;
+        }
+
+        .media-date { 
+            font-size: 0.75rem; 
+            color: #a0aec0; 
+        }
+
+        .download-link { 
+            font-size: 0.85rem; 
+            font-weight: bold; 
+            color: #28a745; 
+            text-decoration: none; 
+            transition: color 0.2s;
+        }
+
+        .download-link:hover {
+            color: #1e7e34;
+        }
+
+        .video-gallery-container h4 {
+            font-weight: 700;
+            color: #2d3748;
+        }
+    </style>
+</head>
+<body>
+    <%- include('partials/navbar.ejs') %>
+
+    <div class="container py-5">
+        <div class="video-gallery-container w-100">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h4 class="m-0"><i class="fas fa-images text-success me-2"></i>My Generated Images</h4>
+                <a href="/chat" class="btn btn-outline-secondary btn-sm">Generate More</a>
+            </div>
+            
+            <% if (images && images.length > 0) { %>
+                <div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-4">
+                    <% images.forEach(img => { %>
+                        <div class="col">
+                            <div class="media-card">
+                                <div class="image-wrapper">
+                                    <% 
+                                        let imgSrc = "";
+                                        let isBase64 = false;
+                                        // Check if it's a URL or Base64 Data
+                                        if (img.image_base64 && (img.image_base64.startsWith('http') || img.image_base64.startsWith('/images'))) {
+                                            imgSrc = img.image_base64; 
+                                        } else {
+                                            imgSrc = "data:image/png;base64," + img.image_base64;
+                                            isBase64 = true;
+                                        }
+                                    %>
+                                    <img src="<%= imgSrc %>" alt="Generated AI Image" loading="lazy">
+                                </div>
+                                <div class="media-meta text-start">
+                                    <p class="media-prompt" title="<%= img.prompt %>">"<%= img.prompt %>"</p>
+                                    <div class="d-flex justify-content-between align-items-center mt-2">
+                                        <span class="media-date"><i class="far fa-clock me-1"></i><%= new Date(img.created_at).toLocaleDateString() %></span>
+                                        
+                                        <div class="d-flex align-items-center">
+                                            <% if (isBase64) { %>
+                                                <a href="javascript:void(0)" 
+                                                   onclick="downloadBase64('<%= imgSrc %>', 'RallyAI_Image_<%= img.id %>.png')" 
+                                                   class="download-link">
+                                                    <i class="fas fa-download me-1"></i> Save
+                                                </a>
+                                            <% } else { %>
+                                                <a href="<%= imgSrc %>" download="RallyAI_Image_<%= img.id %>.png" class="download-link">
+                                                    <i class="fas fa-download me-1"></i> Save
+                                                </a>
+                                            <% } %>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    <% }) %>
+                </div>
+            <% } else { %>
+                <div class="text-center py-5 bg-white rounded-4 border">
+                    <i class="fas fa-image fa-3x text-muted mb-3 opacity-50"></i>
+                    <p class="text-muted fs-5">You haven't generated any images yet.</p>
+                    <a href="/?openBot=1" class="btn btn-success px-4 py-2">
+                        <i class="fas fa-magic me-2"></i>Create Storyboard
+                    </a>
+                </div>
+            <% } %>
+        </div>
+    </div>
+
+    <script>
+        function downloadBase64(base64Data, fileName) {
+            const link = document.createElement("a");
+            link.href = base64Data;
+            link.download = fileName;
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        }
+    </script>
+
+    
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

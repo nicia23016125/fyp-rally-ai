@@ -277,33 +277,11 @@ exports.getMyself = (req, res) => {
                     subResults = []; 
                 }
 
-                // Query 3: Get Generated Videos
-                const vidSql = 'SELECT * FROM generated_videos WHERE user_id = ? ORDER BY created_at DESC';
-
-                db.query(vidSql, [userId], (vidError, vidResults) => {
-                    if (vidError) {
-                        console.error('Video query error:', vidError);
-                        vidResults = [];
-                    }
-
-                    // ✅ NEW Query 4: Get Generated Images (from generation_history)
-                    const imgSql = 'SELECT * FROM generation_history WHERE user_id = ? ORDER BY created_at DESC';
-
-                    db.query(imgSql, [userId], (imgError, imgResults) => {
-                        if (imgError) {
-                            console.error('Image query error:', imgError);
-                            imgResults = []; // Fail gracefully
-                        }
-
-                        // Render with ALL data (User, Sub, Videos, Images)
-                        res.render('viewMyself', { 
-                            userProfile: userResults[0], 
-                            subscription: subResults.length > 0 ? subResults[0] : null,
-                            videos: vidResults,
-                            images: imgResults, // <--- Passing images to the view
-                            tokens: req.session.tokens || null 
-                        });
-                    });
+                // Render with ONLY User and Subscription data
+                // We no longer need to pass 'videos', 'images', or 'tokens' here
+                res.render('viewMyself', { 
+                    userProfile: userResults[0], 
+                    subscription: subResults.length > 0 ? subResults[0] : null
                 });
             });
 
@@ -312,6 +290,31 @@ exports.getMyself = (req, res) => {
         }
     });
 };
+
+exports.getVideos = (req, res) => {
+    const userId = req.session.user.userId;
+
+    // Fetch only the videos for this user
+    const vidSql = 'SELECT * FROM generated_videos WHERE user_id = ? ORDER BY created_at DESC';
+
+    db.query(vidSql, [userId], (err, results) => {
+        if (err) {
+            console.error('Video query error:', err);
+            return res.render('viewvideos', { 
+                videos: [], 
+                tokens: req.session.tokens || null 
+            });
+        }
+
+        // Render the viewvideos.ejs file
+        res.render('viewvideos', { 
+            videos: results, 
+            // Pass tokens so the Drive button works
+            tokens: req.session.tokens || null 
+        });
+    });
+};
+
 
 // ✅ Edit Profile Form for Logged-in User
 exports.editMyselfForm = (req, res) => {
@@ -414,6 +417,33 @@ exports.deleteMyself = (req, res) => {
                     });
                 });
             });
+        });
+    });
+};
+
+
+exports.viewImageGallery = (req, res) => {
+    // 1. Check for session/user
+    if (!req.session || !req.session.user) {
+        return res.redirect('/login');
+    }
+
+    const userId = req.session.user.userId;
+
+    // 2. Fetch Generation History
+    const imgSql = 'SELECT * FROM generation_history WHERE user_id = ? ORDER BY created_at DESC';
+
+    db.query(imgSql, [userId], (imgError, imgResults) => {
+        if (imgError) {
+            console.error('Image query error:', imgError);
+            imgResults = []; // Fail gracefully
+        }
+
+        // 3. Render the EJS file
+        res.render('images', {
+            user: req.session.user,
+            images: imgResults || [],
+            currentPage: 'gallery'
         });
     });
 };

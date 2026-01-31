@@ -12,7 +12,7 @@
           <li class="nav-item"><a class="nav-link" href="/subscriptions">Subscriptions</a></li>
           <li class="nav-item"><a class="nav-link" href="/users">Users</a></li>
         <% } %>
-        <li class="nav-item"><a class="nav-link" href="/cart">Cart</a></li>
+        <!-- <li class="nav-item"><a class="nav-link" href="/cart">Cart</a></li> -->
       </ul>
 
       <ul class="navbar-nav ms-auto d-flex align-items-center">
@@ -22,6 +22,14 @@
             <i class="fas fa-star me-1"></i> Review
           </a>
         </li>
+
+        <% if (session.user) { %>
+          <li class="nav-item">
+            <a class="nav-link project-btn-nav" href="/content/user/<%= session.user.userId %>">
+              <i class="fas fa-folder-open me-1"></i> My Projects
+            </a>
+          </li>
+        <% } %>
 
         <li class="nav-item">
           <span class="nav-link user-label">
@@ -36,7 +44,9 @@
             </a>
             <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="userDropdown">
               <li><a class="dropdown-item" href="/viewMyself">My Profile</a></li>
-              <% if (session.user && session.user.userRole === 'admin') { %>
+              <li><a class="dropdown-item" href="/content/user/<%= session.user.userId %>">My Projects</a></li>
+
+              <% if (session.user.userRole === 'admin') { %>
                 <li><a class="dropdown-item" href="/dashboard">Dashboard</a></li>
                 <li><a class="dropdown-item" href="/admin/analytics">Analytics</a></li>
                 <li><a class="dropdown-item" href="/admin/content">Content Items</a></li>
@@ -55,16 +65,16 @@
 </nav>
 
 <style>
+  /* Base Styles from second code block */
   .navbar-custom {
-    background-color: #eef6ff !important;
+    background-color: #9775b5 !important;
     padding: 15px 0;
   }
 
-  /* Force right-alignment and vertical centering */
   .navbar-nav.ms-auto {
     display: flex;
     align-items: center;
-    flex-direction: row; /* Keeps items side-by-side on desktop */
+    flex-direction: row;
   }
 
   .navbar .navbar-nav .nav-item {
@@ -76,14 +86,19 @@
     font-weight: bold;
   }
 
-  /* Review Button Styling */
-  .review-btn-nav {
-    color: #0d6efd !important;
-    border: 2px solid #0d6efd;
+  /* Shared styling for rounded pill buttons */
+  .review-btn-nav, .project-btn-nav {
     border-radius: 20px;
     padding: 6px 15px !important;
     transition: 0.3s ease;
     white-space: nowrap;
+    border: 2px solid transparent;
+  }
+
+  /* Review Button Blue Outline */
+  .review-btn-nav {
+    color: #0d6efd !important;
+    border-color: #0d6efd;
   }
 
   .review-btn-nav:hover {
@@ -92,10 +107,22 @@
     transform: translateY(-2px);
   }
 
+  /* My Projects Button (Matches the style of others) */
+  .project-btn-nav {
+    color: #2b6cb0 !important;
+    border-color: #2b6cb0;
+  }
+
+  .project-btn-nav:hover {
+    background-color: #2b6cb0;
+    color: white !important;
+    transform: translateY(-2px);
+  }
+
   /* User Role Label */
   .user-label {
     font-weight: bold;
-    background: #cfe4ff;
+    background: rgba(0, 0, 0, 0.05); /* Subtle dark overlay on the purple */
     padding: 6px 15px;
     border-radius: 20px;
     color: black;
@@ -103,11 +130,11 @@
     white-space: nowrap;
   }
 
-  /* Profile Dropdown */
+  /* Profile Dropdown Toggle */
   .nav-link.dropdown-toggle {
-    background: #cfe4ff;
+    background: rgba(0, 0, 0, 0.1);
     border-radius: 20px;
-    padding: 8px 15px;
+    padding: 8px 15px !important;
     transition: 0.3s ease;
   }
 
@@ -116,6 +143,7 @@
     color: white !important;
   }
 
+  /* Dropdown Menu */
   .dropdown-menu {
     background: #cfe4ff;
     border-radius: 10px;

@@ -2,7 +2,8 @@ const axios = require("axios");
 
 // Controller to generate a QR code
 exports.generateQrCode = async (req, res) => {
-    const { cartTotal } = req.body;
+    const cartTotal = req.body.amount; // Match your form field from invoice.ejs
+
     console.log(cartTotal)
     try {
         const requestBody = {
@@ -50,15 +51,12 @@ exports.generateQrCode = async (req, res) => {
         } else {
             // Handle partial or failed responses
             res.render("netsQrFail", {
-                title: "Error",
-                responseCode: qrData.response_code || "N.A.",
-                instructions: qrData.network_status === 0 ? qrData.instruction : "",
-                errorMsg: qrData.network_status !== 0 ? "Frontend Error Message" : "",
-            });
+    message: "NETS QR Payment Failed. Please try again later."
+});
+
         }
     } catch (error) {
         console.error("Error in generateQrCode:", error.message);
-        // Redirect to fail page on API call failure
-        res.redirect("/nets-qr/fail");
+    
     }
 };

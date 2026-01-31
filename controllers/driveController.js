@@ -1,4 +1,3 @@
-// controllers/driveController.js
 const { google } = require('googleapis');
 const axios = require('axios');
 const fs = require('fs');
@@ -10,43 +9,56 @@ exports.uploadToFile = async (req, res) => {
         return res.status(401).json({ error: 'Please log in to Google first.' });
     }
 
-    // 2. Setup Drive Client
-    const oauth2Client = new google.auth.OAuth2();
+    // 2. Setup Drive Client properly (Include ID/Secret to allow token refreshing)
+    const oauth2Client = new google.auth.OAuth2(
+        process.env.GOOGLE_CLIENT_ID,
+        process.env.GOOGLE_CLIENT_SECRET,
+        process.env.REDIRECT_URI
+    );
     oauth2Client.setCredentials(req.session.tokens);
+    
     const drive = google.drive({ version: 'v3', auth: oauth2Client });
 
     try {
         let { fileUrl, fileName } = req.body;
         let mediaBody;
 
-        console.log("📂 processing upload for:", fileUrl);
+        console.log("📂 Processing upload for:", fileUrl);
 
         // 3. Determine Source (Local File vs External URL)
         if (fileUrl.startsWith('http')) {
-            // Case A: It's an external URL (like Pollinations.ai) -> Use Axios
+            // Case A: External URL (AI Images)
             const response = await axios.get(fileUrl, { responseType: 'stream' });
             mediaBody = response.data;
         } else {
-            // Case B: It's a local file (on your computer) -> Use File System (fs)
+            // Case B: Local File (Generated Videos)
             
-            // Clean up the path: remove leading slash if present (e.g. "/images/..." -> "images/...")
+            // Remove leading slash (e.g., "/videos/..." -> "videos/...")
             const cleanPath = fileUrl.startsWith('/') ? fileUrl.slice(1) : fileUrl;
             
-            // Construct absolute path assuming your app.js is in the root
-            // If your files are in "public", usually the DB stores "images/vid.mp4" or "/images/vid.mp4"
-            // We look inside the "public" folder.
-            let localPath = path.join(__dirname, '..', 'public', cleanPath);
+            // --- FIX START: Check multiple locations ---
+            
+            // Path 1: Inside 'public' folder (Standard)
+            // Note: We use '..' because we are inside the 'controllers' folder
+            const publicPath = path.join(__dirname, '..', 'public', cleanPath);
 
-            // Fallback: If the path in DB already includes "public", don't add it again
-            if (!fs.existsSync(localPath)) {
-                localPath = path.join(__dirname, '..', cleanPath);
+            // Path 2: Root level folder (e.g., 'videosforindex')
+            const rootPath = path.join(__dirname, '..', cleanPath);
+
+            let finalPath;
+
+            if (fs.existsSync(publicPath)) {
+                finalPath = publicPath;
+            } else if (fs.existsSync(rootPath)) {
+                finalPath = rootPath;
+            } else {
+                // Debugging help
+                console.error(`❌ File not found. Checked:\n1. ${publicPath}\n2. ${rootPath}`);
+                throw new Error(`Local file not found: ${cleanPath}`);
             }
+            // --- FIX END ---
 
-            if (!fs.existsSync(localPath)) {
-                throw new Error(`Local file not found at: ${localPath}`);
-            }
-
-            mediaBody = fs.createReadStream(localPath);
+            mediaBody = fs.createReadStream(finalPath);
         }
 
         // 4. Determine MimeType
@@ -58,9 +70,9 @@ exports.uploadToFile = async (req, res) => {
             body: mediaBody,
         };
 
-        // 5. Upload to Google Drive
+        // 5. Upload
         const file = await drive.files.create({
-            requestBody: fileMetadata, // Note: 'requestBody' is the modern field name, 'resource' is older
+            requestBody: fileMetadata,
             media: media,
             fields: 'id',
         });

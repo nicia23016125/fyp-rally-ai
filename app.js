@@ -25,8 +25,8 @@ const cartController = require('./controllers/cartController');
 const userController = require('./controllers/userController');
 const paypalController = require('./controllers/paypalController');
 const netsQrController = require("./controllers/netsQrController");
-const ticketController = require('./controllers/ticketController');
 const subscriptionController = require('./controllers/subscriptionController');
+const subspaymentController = require('./controllers/subspaymentController');
 const dashboardController = require('./controllers/dashboardController');
 const contentController = require('./controllers/contentController');
 const reviewController = require('./controllers/reviewController');
@@ -42,6 +42,26 @@ const editingController = require('./controllers/editingcontroller');
 // Import middleware
 const { checkAuthenticated, checkAdmin, checkUser } = require('./middleware/auth');
 const { validateRegistration, validateLogin } = require('./middleware/validation');
+
+// --- DEBUG: Verify all controller exports ---
+console.log("✅ subspaymentController.subscribe:", typeof subspaymentController.subscribe);
+console.log("✅ subscriptionController.subscribe:", typeof subscriptionController.subscribe);
+console.log("✅ userController.login:", typeof userController.login);
+console.log("✅ userController.loginForm:", typeof userController.loginForm);
+console.log("✅ userController.register:", typeof userController.register);
+console.log("✅ cartController:", typeof cartController);
+console.log("✅ paypalController:", typeof paypalController);
+console.log("✅ netsQrController:", typeof netsQrController);
+;
+console.log("✅ dashboardController:", typeof dashboardController);
+console.log("✅ contentController:", typeof contentController);
+console.log("✅ reviewController:", typeof reviewController);
+console.log("✅ authController:", typeof authController);
+console.log("✅ driveController:", typeof driveController);
+console.log("✅ videoController:", typeof videoController);
+console.log("✅ analyticsController:", typeof analyticsController);
+console.log("✅ chatController:", typeof chatController);
+console.log("✅ editingController:", typeof editingController);
 
 // --- MIDDLEWARE CONFIGURATION ---
 
@@ -180,13 +200,20 @@ app.get('/editMyself', checkAuthenticated, userController.editMyselfForm);
 app.post('/editMyself', checkAuthenticated, upload.single('userImage'), userController.editMyself);
 app.post('/deleteMyself', checkAuthenticated, userController.deleteMyself);
 
+//editing
+app.get('/edit-library', editingController.getLibrary);
+app.post('/trim-video', editingController.trimVideo);
+
+// This handles the actual FFmpeg merging
+app.post('/merge-videos', editingController.mergeVideos);
+
 // ✅ Subscriptions Routes
 // 1. The general page that handles the redirect logic
 app.get('/subscriptions', subscriptionController.getSubscriptions);
 // 2. The specific page that shows a single subscription
 app.get('/subscription/:id', subscriptionController.getSubscription);
-// 3. The action that creates the subscription
-app.post('/subscribe', subscriptionController.subscribe);
+// 3. The action that creates the subscription (via payment service)
+app.post('/subscribe', subspaymentController.subscribe);
 
 // ✅ Admin-only Subscription routes
 app.get('/admin/subscriptions/add', checkAdmin, subscriptionController.addSubscriptionForm);
@@ -195,20 +222,16 @@ app.get('/admin/subscriptions/edit/:id', checkAdmin, subscriptionController.edit
 app.post('/admin/subscriptions/edit/:id', checkAdmin, subscriptionController.updateSubscription);
 app.post('/admin/subscriptions/delete/:id', checkAdmin, subscriptionController.deleteSubscription);
 
-// ✅ Admin-only Ticket routes
-app.get('/addTicket', checkAdmin, ticketController.addTicketForm);
-app.post('/addTicket', checkAdmin, upload.single('eventImage'), ticketController.addTicket);
-app.get('/editTicket/:id', checkAdmin, ticketController.editTicketForm);
-app.post('/editTicket/:id', checkAdmin, upload.single('eventImage'), ticketController.editTicket);
-app.post('/deleteTicket/:id', checkAdmin, ticketController.deleteTicket);
-
 // ✅ Admin Dashboard
 app.get('/dashboard', checkAdmin, dashboardController.index);
+ 
+app.get('/viewvideos', checkAuthenticated, userController.getVideos);
+
 
 // ✅ Admin Content Items
-app.get('/admin/content', checkAdmin, contentController.index);
+app.get('/admin/content', checkAuthenticated, contentController.index);
+// Admin or User route to view specific content
 
-// ✅ Cart Routes (Users Only)
 app.get('/cart', checkAuthenticated, cartController.getCart);
 app.post('/addToCart/:id', checkAuthenticated, checkUser, cartController.addToCart);
 app.post('/updateCart/:id', checkAuthenticated, checkUser, cartController.updateCartTicket);
@@ -247,17 +270,9 @@ app.get('/chat', checkAuthenticated, chatController.getChatbot);
 app.post('/api/generate-nano', checkAuthenticated, videoController.generateNanoImage);
 // ✅ Generate NETS QR Payment Route
 app.get("/generateNETSQR", checkAuthenticated, netsQrController.generateQrCode);
+// Nets QR failure page
+
 app.post("/generateNETSQR", checkAuthenticated, netsQrController.generateQrCode);
-
-
-
-
-
-
-
-
-
-
 
 // --- NEW ANALYTICS API ROUTE ---
 // This route handles the actual page load
